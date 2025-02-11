@@ -12,7 +12,15 @@ sudo chmod +x /usr/local/bin/docker-compose
 # Clone your repository
 cd /home/ec2-user
 git clone https://github.com/davidPope1/VotingApp.git
-cd DatingApp
+
+# Change ownership and permissions of health check scripts
+sudo chown ec2-user:ec2-user /home/ec2-user/VotingApp/healthchecks/redis.sh
+sudo chown ec2-user:ec2-user /home/ec2-user/VotingApp/healthchecks/postgres.sh
+chmod +x /home/ec2-user/VotingApp/healthchecks/redis.sh
+chmod +x /home/ec2-user/VotingApp/healthchecks/postgres.sh
+
+# Navigate into the cloned repository directory
+cd Votingapp
 
 # Start the application
 docker-compose up --build

@@ -6,7 +6,7 @@ resource "aws_instance" "web-app" {
   ami             = var.ami 
   instance_type   = var.instance_type
   tags = {
-    Name = "MyWebApp"
+    Name = "MyWebVotingApp"
     Description = "A voting web app hosted by Docker on AWS"
   }
 
@@ -28,7 +28,23 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Allow frontend access (port 8000)
+  # Allow HTTP (port 80)
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow HTTPS (port 443)
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow frontend access (port 8080 and 8081)
   ingress {
     from_port   = 8080
     to_port     = 8080
@@ -36,7 +52,7 @@ resource "aws_security_group" "web_sg" {
         cidr_blocks = ["0.0.0.0/0"]
   }
 
-    ingress {
+  ingress {
     from_port   = 8081
     to_port     = 8081
     protocol    = "tcp"
@@ -55,7 +71,9 @@ resource "aws_security_group" "web_sg" {
 # http://13.49.225.91:8000   
 
 
-# ssh -i web-access-key-pair.pem ec2-user@13.49.225.91 
+# ssh -i web-access-key-pair.pem ec2-user@16.171.41.77        # 16.171.41.77
+
+# http://16.171.41.77:8080
 
 # terraform apply -auto-approve
 
@@ -63,3 +81,6 @@ resource "aws_security_group" "web_sg" {
 
 # docker ps
 
+# cd healthchecks / sudo chown ec2-user:ec2-user redis.sh / sudo chown ec2-user:ec2-user postgres.sh / chmod +x redis.sh / chmod +x postgres.sh
+
+# docker-compose down / up --build 
