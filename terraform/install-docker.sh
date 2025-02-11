@@ -1,6 +1,6 @@
 #!/bin/bash
 sudo yum update -y
-sudo yum install -y docker git
+sudo yum install -y docker git nginx 
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker ec2-user
@@ -20,7 +20,7 @@ chmod +x /home/ec2-user/VotingApp/healthchecks/redis.sh
 chmod +x /home/ec2-user/VotingApp/healthchecks/postgres.sh
 
 # Navigate into the cloned repository directory
-cd Votingapp
+cd VotingApp
 
 # Move SSL certificates to the appropiate folder
 sudo mkdir -p /etc/nginx/ssl
@@ -29,6 +29,7 @@ sudo cp ssl/vote.linkpc.net.key /etc/nginx/ssl/
 sudo cp ssl/ca.cer /etc/nginx/ssl/
 
 # Configure Nginx to use the SSL certificates
+sudo mkdir -p /etc/nginx/conf.d
 sudo tee /etc/nginx/conf.d/votingapp.conf > /dev/null <<EOL
 server {
     listen 80;

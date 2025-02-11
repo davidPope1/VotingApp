@@ -70,9 +70,9 @@ resource "aws_security_group" "web_sg" {
 
 # http://13.49.225.91:8000   
 
-# 	vote.linkpc.net     130.41.151.77
+# 	vote.linkpc.net     13.61.32.174
 
-# ssh -i web-access-key-pair.pem ec2-user@16.171.41.77        # 16.171.41.77
+# ssh -i web-access-key-pair.pem ec2-user@13.61.32.174        # 13.61.32.174
 
 # http://16.171.41.77:8080
 
