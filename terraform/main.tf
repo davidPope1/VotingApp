@@ -72,9 +72,9 @@ resource "aws_security_group" "web_sg" {
 
 # 	vote.linkpc.net     13.61.32.174
 
-# ssh -i web-access-key-pair.pem ec2-user@16.171.144.14        # 16.171.144.14
+# ssh -i web-access-key-pair.pem ec2-user@16.171.29.189        # 16.171.29.189
 
-# http://16.171.144.14:8080
+# http://16.171.29.189:8080
 
 # terraform apply -auto-approve
 
