@@ -72,9 +72,9 @@ resource "aws_security_group" "web_sg" {
 
 # 	vote.linkpc.net     13.61.32.174
 
-# ssh -i web-access-key-pair.pem ec2-user@13.61.32.174        # 13.61.32.174
+# ssh -i web-access-key-pair.pem ec2-user@16.171.144.14        # 16.171.144.14
 
-# http://16.171.41.77:8080
+# http://16.171.144.14:8080
 
 # terraform apply -auto-approve
 
@@ -85,3 +85,5 @@ resource "aws_security_group" "web_sg" {
 # cd healthchecks / sudo chown ec2-user:ec2-user redis.sh / sudo chown ec2-user:ec2-user postgres.sh / chmod +x redis.sh / chmod +x postgres.sh
 
 # docker-compose down / up --build 
+
+# sudo cat /var/log/cloud-init-output.log     - comanda pt a accesa log urile ec2 ului    //problem cu nginx 
