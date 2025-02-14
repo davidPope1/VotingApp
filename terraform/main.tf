@@ -72,9 +72,9 @@ resource "aws_security_group" "web_sg" {
 
 # 	vote.linkpc.net     13.61.32.174
 
-# ssh -i web-access-key-pair.pem ec2-user@16.171.29.189        # 16.171.29.189
+# ssh -i web-access-key-pair.pem ec2-user@16.171.4.112        # 16.171.4.112
 
-# http://16.171.29.189:8080
+# http://16.171.4.112:8080       https://vote.linkpc.net        https://vote.linkpc.net/result
 
 # terraform apply -auto-approve
 
@@ -87,3 +87,5 @@ resource "aws_security_group" "web_sg" {
 # docker-compose down / up --build 
 
 # sudo cat /var/log/cloud-init-output.log     - comanda pt a accesa log urile ec2 ului    //problem cu nginx 
+
+# nslookup vote.linkpc.net    // pt a verifica daca pointeaza dnsu la ipu ec2 instance-ului 

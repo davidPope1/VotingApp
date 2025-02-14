@@ -3,6 +3,8 @@ sudo yum update -y
 sudo yum install -y docker git nginx 
 sudo systemctl start docker
 sudo systemctl enable docker
+sudo systemctl start nginx
+sudo systemctl enable nginx
 sudo usermod -aG docker ec2-user
 
 # Install Docker Compose
@@ -27,13 +29,14 @@ sudo mkdir -p /etc/nginx/ssl
 sudo cp ssl/vote.linkpc.net.cer /etc/nginx/ssl/
 sudo cp ssl/vote.linkpc.net.key /etc/nginx/ssl/
 sudo cp ssl/ca.cer /etc/nginx/ssl/
+sudo chmod 600 /etc/nginx/ssl/*
 
 # Move Nginx configuration files to the appropiate folder 
 sudo cp nginx.conf /etc/nginx/nginx.conf
 sudo cp nginx/votingapp.conf /etc/nginx/conf.d/votingapp.conf
 
 # Start the application
-docker-compose up --build
+sudo docker-compose up --build
 
 # Restart Nginx to apply the new configuration 
 sudo systemctl restart nginx 
