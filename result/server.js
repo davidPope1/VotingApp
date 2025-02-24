@@ -2,6 +2,7 @@ var express = require('express'),
     async = require('async'),
     { Pool } = require('pg'),
     cookieParser = require('cookie-parser'),
+    path = require('path'),
     app = express(),
     server = require('http').Server(app),
     io = require('socket.io')(server);
@@ -65,10 +66,18 @@ function collectVotesFromResult(result) {
 
 app.use(cookieParser());
 app.use(express.urlencoded());
-app.use(express.static(__dirname + '/views'));
+// app.use(express.static(__dirname + '/views'));     
+// app.use(express.static('views'));
+// app.use(express.static(__dirname + '/result/views'));
+app.use(express.static(path.join(__dirname, 'views')));
+// app.use("/views", express.static('views')); 
 
-app.get('/', function (req, res) {
+app.get('/result', function (req, res) {    
   res.sendFile(path.resolve(__dirname + '/views/index.html'));
+  // res.sendFile(path.resolve(__dirname + '/views/angular.min.js'));
+  // res.sendFile(path.resolve(__dirname + '/views/app.js'));
+  // res.sendFile(path.resolve(__dirname + '/views/socket.io.js'));
+  // res.sendFile(path.resolve(__dirname + '/views/stylesheets/style.css'));
 });
 
 server.listen(port, function () {

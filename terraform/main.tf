@@ -72,9 +72,9 @@ resource "aws_security_group" "web_sg" {
 
 # 	vote.linkpc.net     13.61.32.174
 
-# ssh -i web-access-key-pair.pem ec2-user@16.171.4.112        # 16.171.4.112
+# ssh -i web-access-key-pair.pem ec2-user@51.21.130.93        # 51.21.130.93
 
-# http://16.171.4.112:8080       https://vote.linkpc.net        https://vote.linkpc.net/result
+# http://51.21.130.93:8080       https://vote.linkpc.net        https://vote.linkpc.net/result
 
 # terraform apply -auto-approve
 
@@ -89,3 +89,8 @@ resource "aws_security_group" "web_sg" {
 # sudo cat /var/log/cloud-init-output.log     - comanda pt a accesa log urile ec2 ului    //problem cu nginx 
 
 # nslookup vote.linkpc.net    // pt a verifica daca pointeaza dnsu la ipu ec2 instance-ului 
+
+# sudo systemd-resolve --flush-caches       // pt a da flush la DNS cache 
+
+# ca sa dam clear la browsing cache pe edge intram la alea 3 pct de sus dam settings si dam pe stanga la Privacy,search and serviecs si sub clear browsing data dam pe choose what to clear selectam cached images and files si coockes and other site data si dam clear now 
+# dupa intram pe edge://net-internals/#hsts si sub Delete domain security policies bagam vote.linkpc.net la Domain si dam Delete 
