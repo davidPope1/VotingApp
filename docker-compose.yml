@@ -125,17 +125,17 @@ services:
     ports: 
       - "8085:8080"
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro 
-      - /var/lib/docker/:/var/lib/docker:ro
+      - /:/rootfs
+      - /var/run:/var/run
+      - /sys:/sys
+      - /var/lib/docker/:/var/lib/docker
     restart: always
     networks:
       - monitoring 
 
   node-explorer:
-    image: prom/node-exporter:latest
-    container_name: node-explorer 
+    image: bitnami/node-exporter:latest
+    container_name: node-exporter 
     ports:
       - "9100:9100"
     volumes:
@@ -145,7 +145,7 @@ services:
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.ingored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
     networks:
       - monitoring 
 
