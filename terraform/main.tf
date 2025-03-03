@@ -49,14 +49,14 @@ resource "aws_security_group" "web_sg" {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
     from_port   = 8081
     to_port     = 8081
     protocol    = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow Prometheus (port 9090)
@@ -86,9 +86,9 @@ resource "aws_security_group" "web_sg" {
 
 # http://13.49.225.91:8000   
 
-# 	vote.linkpc.net     16.171.25.81
+# 	vote.linkpc.net     http://13.49.240.17:8080
 
-# ssh -i web-access-key-pair.pem ec2-user@13.60.221.27        # 13.60.221.27
+# ssh -i web-access-key-pair.pem ec2-user@13.49.240.17        # 13.49.240.17
 
 # http://51.21.130.93:8080       https://vote.linkpc.net        https://vote.linkpc.net/result
 
