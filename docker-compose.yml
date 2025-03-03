@@ -134,7 +134,7 @@ services:
       - monitoring 
 
   node-explorer:
-    image: prom/node-explorer:latest
+    image: prom/node-exporter:latest
     container_name: node-explorer 
     ports:
       - "9100:9100"
