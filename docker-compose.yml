@@ -101,6 +101,8 @@ services:
     restart: unless-stopped 
     depends_on:
       - cadvisor
+    networks:
+      - monitoring 
   
   grafana: 
     image: grafana/grafana:latest
@@ -114,6 +116,8 @@ services:
     depends_on:
       - prometheus
     restart: unless-stopped
+    networks:
+      - monitoring 
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest 
@@ -121,10 +125,13 @@ services:
     ports: 
       - "8085:8080"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /sys:/sys 
-      - /var/lib/docker/:/var/lib/docker 
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro 
+      - /var/lib/docker/:/var/lib/docker:ro
     restart: always
+    networks:
+      - monitoring 
 
   node-explorer:
     image: prom/node-explorer:latest
@@ -139,6 +146,8 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.ingored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring 
 
 volumes:
   db-data:
@@ -148,6 +157,8 @@ volumes:
 networks:
   front-tier:
   back-tier:
+  monitoring:
+    external: true
 
 
 
