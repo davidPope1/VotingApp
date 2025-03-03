@@ -59,6 +59,22 @@ resource "aws_security_group" "web_sg" {
         cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Allow Prometheus (port 9090)
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow Grafana (port 3000)
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Allow all outbound traffic
   egress {
     from_port   = 0
@@ -72,7 +88,7 @@ resource "aws_security_group" "web_sg" {
 
 # 	vote.linkpc.net     16.171.25.81
 
-# ssh -i web-access-key-pair.pem ec2-user@16.171.25.81        # 51.21.130.93
+# ssh -i web-access-key-pair.pem ec2-user@13.60.221.27        # 13.60.221.27
 
 # http://51.21.130.93:8080       https://vote.linkpc.net        https://vote.linkpc.net/result
 

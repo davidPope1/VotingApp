@@ -1,10 +1,10 @@
 #!/bin/bash
 sudo yum update -y
 sudo yum install -y docker git nginx 
-sudo systemctl start docker
 sudo systemctl enable docker
-sudo systemctl start nginx
+sudo systemctl start docker
 sudo systemctl enable nginx
+sudo systemctl start nginx
 sudo usermod -aG docker ec2-user
 
 # Install Docker Compose
