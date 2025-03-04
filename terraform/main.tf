@@ -120,3 +120,14 @@ resource "aws_security_group" "web_sg" {
 
 # ca sa dam clear la browsing cache pe edge intram la alea 3 pct de sus dam settings si dam pe stanga la Privacy,search and serviecs si sub clear browsing data dam pe choose what to clear selectam cached images and files si coockes and other site data si dam clear now 
 # dupa intram pe edge://net-internals/#hsts si sub Delete domain security policies bagam vote.linkpc.net la Domain si dam Delete 
+
+# git restore . && git clean -df  && git pull origin main    ca sa dam discard la schimbarile locale si sa ne asiguram ca suntem up to date cu repo-ul 
+
+# sa zicem ca dam docker-compose up in repo pe ubuntu direct fara deploy pe aws !!!
+
+# sudo apt update  si  sudo apt upgrade -y  si  sudo apt install -y docker.io git nginx
+
+# sudo chown david:david healthchecks/redis.sh  si  sudo chown david:david healthchecks/postgres.sh
+# chmod +x healthchecks/redis.sh  si  chmod +x healthchecks/postgres.sh
+
+# in grafana la mergem la Connections -> Data sources si cautam in lista Prometheus si la URL punem http://prometheus:9090 si dupa dam setup dashboard si avem mai multe variante https://github.com/sohammohite/container-monitoring/blob/main/dashboard.json ori ID-ul 1860 sau 14282

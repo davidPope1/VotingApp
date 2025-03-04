@@ -96,11 +96,24 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
+      - ./alert.rules:/etc/prometheus/alert.rules  # Mount the alert rules file
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--alertmanager.url=http://alertmanager:9093'  # Point to Alertmanager service
     restart: unless-stopped 
     depends_on:
       - cadvisor
+      - node-exporter
+    networks:
+      - monitoring 
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml  # Path to Alertmanager config
+    ports:
+      - "9093:9093"
     networks:
       - monitoring 
   
@@ -133,7 +146,7 @@ services:
     networks:
       - monitoring 
 
-  node-explorer:
+  node-exporter:
     image: bitnami/node-exporter:latest
     container_name: node-exporter 
     ports:
@@ -158,7 +171,7 @@ networks:
   front-tier:
   back-tier:
   monitoring:
-    external: true
+    # external: true      # error when composing so removed, but works ok without it 
 
 
 

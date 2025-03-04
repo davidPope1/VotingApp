@@ -13,3 +13,12 @@ scrape_configs:
   - job_name: "cadvisor" 
     static_configs:
       - targets: ["cadvisor:8080"]
+
+rule_files:
+  - "alert.rules"  # Add the path to the file containing your alerting rules
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'alertmanager:9093'   # Point to your Alertmanager service# Point to your Alertmanager service

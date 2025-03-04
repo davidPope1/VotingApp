@@ -1,0 +1,19 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+  receiver: 'email-notifications'
+
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'davidpopescu85@gmail.com'  # Replace with your Gmail address
+        from: 'davidpopescu85@gmail.com'  # Use the same Gmail address here
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'davidpopescu85@gmail.com'  # Your Gmail address
+        auth_password: 'zlrs hbks bmok pbzb'  # App password zlrs hbks bmok pbzb
+        require_tls: true

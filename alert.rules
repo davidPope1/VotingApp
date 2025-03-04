@@ -1,0 +1,87 @@
+groups:
+- name: memory_alerts
+  rules:
+  - alert: HighMemoryUsage
+    expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.8
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Memory usage is above 80% in container"
+
+- name: cpu_alerts
+  rules:
+  - alert: HighCPULoad
+    expr: rate(container_cpu_user_seconds_total[1m]) > 0.9
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "CPU usage is above 90% in container"
+
+- name: disk_alerts
+  rules:
+  - alert: HighDiskUsage
+    expr: (container_fs_usage_bytes / container_fs_limit_bytes) > 0.8
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Disk usage is above 80% in container"
+
+- name: container_alerts
+  rules:
+  - alert: ContainerDown
+    expr: up{job="docker"} == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Container is down"
+
+- name: prometheus_alerts
+  rules:
+  - alert: ScrapeFailure
+    expr: scrape_samples_post_metric_relabeling_failed_total > 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Prometheus scrape failure"
+
+- name: http_request_alerts
+  rules:
+  - alert: HighHTTPRequestLatency
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "95th percentile of HTTP request latency is above 2 seconds"
+
+- name: disk_operations
+  rules:
+  - alert: HighDiskReads
+    expr: rate(node_disk_read_bytes_total[5m]) > 1000000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High disk read rate"
+  - alert: HighDiskWrites
+    expr: rate(node_disk_written_bytes_total[5m]) > 1000000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High disk write rate"
+
+- name: node_alerts
+  rules:
+  - alert: HighNodeCPULoad
+    expr: avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance) < 0.1
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Node CPU load is above 90%"
