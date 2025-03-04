@@ -99,7 +99,6 @@ services:
       - ./alert.rules:/etc/prometheus/alert.rules  # Mount the alert rules file
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--alertmanager.url=http://alertmanager:9093'  # Point to Alertmanager service
     restart: unless-stopped 
     depends_on:
       - cadvisor
