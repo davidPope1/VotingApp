@@ -15,5 +15,5 @@ receivers:
         from: 'davidpopescu85@gmail.com'  # Use the same Gmail address here
         smarthost: 'smtp.gmail.com:587'
         auth_username: 'davidpopescu85@gmail.com'  # Your Gmail address
-        auth_password: 'zlrs hbks bmok pbzb'  # App password zlrs hbks bmok pbzb
+        auth_password: 'zlrs hbks bmok pbzb'  # App password zlrs hbks bmok pbzb  auth_password_file: '/etc/alertmanager/secrets/smtp-password' after command  kubectl create secret generic alertmanager-gmail-secret --from-literal=smtp-password='zlrs hbks bmok pbzb' -n monitoring 
         require_tls: true

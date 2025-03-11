@@ -2,7 +2,8 @@ provider "aws" {
   region = "eu-north-1"
 }
 
-resource "aws_instance" "web-app" {                 
+resource "aws_instance" "web-app" {
+  count           = var.instance_count                 
   ami             = var.ami 
   instance_type   = var.instance_type
   tags = {

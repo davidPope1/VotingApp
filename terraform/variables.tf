@@ -1,3 +1,9 @@
+variable "instance_count" {
+  description = "Number of instances to create"
+  type        = number
+  default     = 1         # Default value but can be sett when we run tf apply: terraform apply -var="instance_count=3"
+}
+
 variable "region" {
   description = "AWS region"
   type        = string
