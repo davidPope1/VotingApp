@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deploy
+  labels:
+    name: postgres-deploy
+    app: demo-voting-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: postgres-pod
+      app: demo-voting-app   # punem labelu folosit si la podu voting-app-pod.yaml
+  template:
+    metadata: 
+      name: postgres-pod
+      labels:
+        name: postgres-pod
+        app: demo-voting-app   # trebuie sa fie la fel cu labelu din selector: cel de sus sus nu cont
+    spec:
+      containers:
+      - name: postgres 
+        image: postgres:9.4 
+        ports:
+        - containerPort: 5432
+        env: 
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "postgres"

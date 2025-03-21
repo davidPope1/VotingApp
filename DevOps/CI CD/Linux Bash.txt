@@ -1,0 +1,22 @@
+Linux Basic Commands 
+
+$ echo "print this"
+
+-pentru a printa ceva, il putem folosi si cu variabile cu $ inainte de numele astora 
+
+-fileurile pe linux sunt bagate intr-o singura structura de fisiere numita virtual directory care contile file-uri din tot storageu computerului si le da merge into a single directory structure 
+-aceasta structura are un singur director de baza numit root 
+-cand ne logam pe un sistem linux, process’s current working directory este home directory-ul contului nostru 
+-current working directory este folderu pe care procesul nostru il foloseste in virtual directory structure 
+-un current working directory este un folder pe care procesul nostru il foloseste in mod curent in structure virtuala de foldere 
+-putem naviga prin aceasta structura virtuala de foldere cu comanda cd 
+-un partener ajutator pt comanda cd este comanda pwd 
+-comanda cd ne muta working directoryu la o noua locatie in sturctura de foldere virtuala si comanda pwd da print la current working direcotry, de ex:
+
+$ pwd 
+/home/David 
+$
+$ cd /etc 
+$ pwd 
+/etc 
+

@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+    redis:
+      image: redis 
+      networks:
+      - back-end
+
+    db:
+       image: postgres:9.4 
+       environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+       networks:
+       - back-end
+
+    vote:
+      image: voting-app 
+      ports:
+      - 5000:80
+
+    # networks:
+    #   - front-end
+    #   - back-end
+
+    worker:
+      image: worker-app
+      networks:
+       - back-end
+
+    result:
+      image: result-app
+      ports:
+      - 5001:80
+      networks:
+      - front-end
+      - back-end
+
+    networks:
+      front-end:
+        driver: bridge
+      back-end:
+        driver: bridge

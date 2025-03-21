@@ -1,0 +1,826 @@
+IAM
+
+Create a User
+
+	-prima oara cream User groups
+	-alegem permission policy , de exemplu administrator access
+	-dupa asta creeam un user de tip IAM, dupa ce bifam provide access to the aws management console
+	-custom passwwrd, si dam sa nu schimbam parola la urm login
+	-adaugam user-ul in grupul creat anterior
+	-facem alt user pe care nu il adaugam in niciun grup
+	-intram pe ec2 service, vedem ca nu avem permisiuni deloc
+	-intram pe primu user si cream un rol: entity type punem aws account, adica ce fel de entitate isi poate asuma rolul
+	-lasam this account
+	-la permission policies cautam ec2 si alegem de ex ec2FullAccess
+	-dam rolului un nume ec2-role
+	-dam create role
+	-al doilea user nu isi poate asuma inca rolul, deoarece nu are permisiunea sts:AssumeRole
+	-in acest json trebuia editata linia Resource
+{
+  "Version": "2012-10-17",
+  "Statement": {
+    "Effect": "Allow",
+    "Action": "sts:AssumeRole",
+    "Resource": "arn:aws:iam::897729098411:role/ec2-role"
+  }
+}
+	-fiind logat in primul user, in pagina din iam la roles si la ec2-role avem la summary o caterogrie arn, copiem acel text si ii dam replace la tot ce e intre "" la Resource
+	-asta va lasa ca userul nostru al doilea sa isi poata asuma rolul
+	-fiind logat in primul user, mergem la users, al doilea user, la permissions add permissions, create inline policy, alegem tab ul json stregem tot ce e acolo si dam copy paste la ce am editat mai sus, next dam nume la policy si o cream
+	-ne logam ca al doilea user, dam sus switch role completam field urile si va merge sa dam switch role, va aparea si sus in dreapta
+
+IAM Identity Center
+
+	-mergem la AWS Organizations si dam create organization
+	-mergem la IAM Identity Center si dam enable identity center
+	-la manage permissions for multiple accounts dam manage permissions 
+	-dam create permission set, lasam predefined premission set si lasam administrator access, next next create
+	-mai facem un permission set si alegem view only access in loc de administrator access, next next create
+	-dupa asta mergem la groups, cream un group pe care il denumin Management
+	-dupa mergem la Users, add user, ii dam numele, next, dupa adaugam userul la un grup existent, inc azul nostru management
+	-dupa mergem la AWS Accounts, selectam main account davis-aws-4, dam assign users or groups, selectam grupul management, next, si assignam cele doua permission sets facute anterior, next next submit
+	-acum avem cele doua perminiuni asignate contului prin grup din care face parte userul 
+	-pe mail dam pe accept invitation unde setam o parola, dupa care ne duce automat la un ogin page, punem username ul userului pe care l am creat  si parola, dupa ne autentificam au authentificator app de pe telefon punem codu din google authentificator,
+	-dupa avem userul cu cele doua permisiuni si ne putem loga cu fiecare dintre acestea(admin sau view only)
+	-de pe dashbouardul de la iam identity center putem salva link ul catre acel login page
+
+Launch template
+
+	-trebuie creat prima oara
+	-alegem ce fel de instante sa creeze linux windows..
+	-punem codul de deploy pt web
+	
+Auto Scaling Groups
+
+	-alegem un Launch Template
+	-alegem anvability zones
+	-nu avem load balancer deocamdata lasam fara
+	-setam group limits -> desired capacity si scaling limits min max
+	
+Target Group
+
+	-pt a face un load balancing trebuie target group
+	-alegem target type instances : pe astea le va targeta
+	-alegem protocolol http port 80 pt web server
+	-nu alegem manual instantele, ci vrem dynamic group ca sa ia toate instantele de tipul dorit de noi
+	
+Load Balancer
+
+	-application load balancer
+	-alegem anvability zones
+	-security grouyp web acces pe 80 si 0.0.0.0 sa intre orice
+	-alegem targert group pe care l am facut
+	-acum ne intoarcem la auto scaling groups
+	-il alegem pe al nostru si mergem unde scrie load balancing dam edit si il alegem pe al nostru de la application network or gateway load balancer target groups
+	-ca sa testam asteptam sa fie healthy instantele si dupa mergem pe load balancers si copien link ul DNS name
+	
+Scaling Policy
+
+	-in auto scaling group marim maximul la 4 sa nu fie ca si min 2
+	-la network adaugam si alte avability zones
+	-facem acelasi lucru si pt load balancer il alegem si mergem pe network mapping si dam click pe edit subnets si alegem aceleasi alte avability zones ca si mai sus
+	-mergem inapoi la auto scaling groups  la automatic scaling si dam create dynamic scaling policy:
+	-lasam target tracking scaling si in loc de cpu alegem application load balancer request count per target
+	-alegem target group al nostru si lasam 50 connection per target daca trece peste scaleaza alte instante
+	
+Cload watch
+	-aici putem vedea alerte daca cele nr de 50 de requesturi e depasit
+	
+La final, stergem auto scaling group si load balancer ca sa nu ne coste nimic.
+
+
+Virtual Private Cloud(VPC)
+
+	-cautam vpc in search bar
+	-mergem la your vpc's -> create vpc, alegem vpc and more, punem denumire de ex my-custom-vpc, lasam cinder block cum este
+	-no ipv6 cinder block
+	-3 availibility zones, 3 public subnets si 3 private subnets, net gateway off, vpc endpoints none
+	-la subnet urile publice intram la edit si bifam enable auto public ip ca acele instante sa aibe ip uri publice by default\
+	-asa se face automat acuma il stergem si creeam un vpc manual
+	-create vpc -> vpc only option nametag MyVPC, ipv4 cidr punem 10.0.0.0/16 restul default, create vpc
+	-acum creeam public and private subnets
+	-subnets -> create subnet -> select MyVPC
+	-la subnet settings punem la primu 1 of 1 numele Public1A 
+	-selectam availability zone eu north 1a
+	-la IPv4 subnet CIDR Block  10.0.1.0/24
+	-mai facem un subnet 2 of 2 si repetam procesul
+	-punem numele Public-1B
+	-selectam availability zone eu north 1b
+	-la IPv4 subnet CIDR Block  10.0.2.0/24
+	-mai facem un subnet 3 of 3 cu numele Private1A
+	-selectam availability zone eu north 1a
+	-la IPv4 subnet CIDR Block  10.0.3.0/24
+	-mai facem un subnet 4 of 4 cu numele Private1B
+	-selectam availability zone eu north 1b
+	-la IPv4 subnet CIDR Block  10.0.4.0/24
+	-create subnet
+	-acuma cream Route Tables, daca selectam MyVPc din lista si mergem pe route table id o sa vedem ca la explicit subnet associations nu exista niciuna facuta 
+	-dar toate subneturile create anteorior sunt implicit asociate cu acest route table
+	-dar noi vrem alt route table pentru subneturile private in caz ca vrem sa facem deploy pe acel gateway si pentru ca subneturile noastre private nu ar trebui sa aiba un route catre un internet gateway
+	-deci in route tables -> create route table
+	-ii dam numele Private-RT
+	-selectam VPC ul nostru MyVPC -> create route table
+	-dupa o sa fim redirectati pe acesta automat dar putem intra pe el si din reoute tables de pe stanga si il alegem pe cel cu numele Private-RT
+	-mergem la explicit subnet associations si dam edit subnet associations si le alegem pe cele private Private1A si Private1B si dam save associations
+	-acum avem route table ul setat corect
+	-acuma cream un Internet Gateway: mergem la internet gateways -> Create internet gateway si punem numele MyIGW si dam Create internet gateway
+	-o sa ne duca automat pe cel creat de noi si la Details dam la Actions -> Attach to VPC, selectam MyVPC si dam Attach internet gateway.
+	-dar instantele noastre din public subnets nu o sa poata folosi acest gateway deoarece nu exista ruta(route)
+	-mergem la Route tables si il alegem pe cel care nu este denumit Private-RT si are la vpc id ul si MyVPC, ii punem si label PublicRT
+	-dupa ce il selectam mergem la Routes  -> Edit routes 
+	-dam pe Add Route si alegem 0.0.0.0/0, la target alegem internet gateway si il alegem pe al nostru MyIGW -> save changes
+	-asta inseamna ca tot in range ul ip ului 10.0.0.0/16 va fi rutat local in cadrul vpc ului si daca nu este in range ul respectivului ip este trimis in gateway ul internetului 
+	-acuma mergem la subnets si la cele publice(Public1A si Public1B) alegem edit subnet settings si dam enable auto assign public ipv4 adress
+	-acuma testam daca merge
+	-mergem la ec2 instances si dam launch instance amazon linux proceed without keypair 
+	-la network settings dam edit si alegem MyVPC
+	-alegem un subnet public de exemplu Public1B
+	-verificam ca auto assign public ip sa fie enabled
+	-cream un seciruty group
+	-il denumim WebAccessMyVPC si dam paste si in description si dam launch
+	-insatnta merge si are un public ip ne putem connecta dupa ce o selectam using ec2 instance connect cu ec2-user si ni se deschide terminalul linux
+	-dupa ce terminam intrerupem instanta
+	
+Security Groups and NACL's
+
+	-in EC2 mangement console mergem la Security Groups si dam create security group
+	-la nume si descriere punem SG1
+	-VPC il lasam pe cel default
+	-adaugam inbound rule de tip SSH si la source punem from anywhere ipv4
+	-stergem outbound rule si incercam sa ne conectam la instanta deoarece avem inbound rule si dam create security group
+	-pronim o instanta punem numele Instance1, dam fara key pair
+	-alegem Select existing Security Group si alagem SG1 facut anterior si dam launch
+	-dupa ce vedem ca instanta e running o selectam si dam connect lasam totu default si dam iar connect
+	-a functionat conectare se deschide terminalul linux pentru ca avem setata regula inbound traffic
+	-daca incercam sa dam ping google.com nu va merge deoarece nu va lasa acel outbound traffic
+	-mergem inapoi la security groups, vedem la security group name care este SG1 si dam click pe security group id
+	-mergem la outbound rules dam edit add rule alegem tipul Custom ICMP -IPv4 si la destination punem anywhere ipv4 si dam save
+	-ne intoarcem la terminal si acuma putem da ping google.com
+	-daca icnercam sa dam curl http://google.com nu va merge deoarece nu avem regula care sa permita http outbound
+	-mergem iara la security group SG1 si dam edit outbound rules si add rule, la tip alegem HTTP, la destination alegem anywhere ipv4
+	-ne intoarcem la terminal si acuma va functiona comanda curl http://google.com deci acuma putem sa folosim protoculul http
+	-deci cand initiem conexiuni outbound trebuie sa avem rules care sa permita acest lucru
+	-ne intoracem la outbound rules, le stergem pe ambele si adaugam regula de tipul All Traffic si la destination anywhere ipv4 care ne va da voie sa initiem toate outboud connections
+	-in terminal dam sudo su sa avem mai multe permisiuni
+	-dam comanda nano user-data.sh si dam paste la asta: 
+		#!/bin/bash
+
+		# Update the system and install necessary packages
+		yum update -y
+		yum install -y httpd
+
+		# Start the Apache server
+		systemctl start httpd
+		systemctl enable httpd
+	-ii dam save ctrl+O si enter
+	-daca dam ls o sa ne apara numele fisierului
+	-dam comanda chmod +x user-data.sh pentru a face fisierul executabil
+	-dupa care dam ./user-data.sh asta va updata patch urile de linux dupa care va instala Apache si vom avea un website
+	-dam cd /var/www/html si dupa ls , va arata un mesaj it works daca ne conectam la site 
+	-nu va functiona pt ca nu avem security group rule
+	-daca mergem la instante o selectam pe a noastra si copiem public ipv4 adress si ii dam paste in alt tab si dam entret sa ne conectam dar nu va functiona doar se va incerca la infinit
+	-deci clar este o problema cu security group pt ca nu da eroare, ci conexiunea nu se face 
+	-mergem la seciruty groups alegem SG1 si la inbound rules add rule alegem tipul http si source anywhere ipv4
+	-acuma va merge sa ne conectam la website si scrie it works
+	-mergem la securoty groups facem sg2 nu adaugam la inceput niciun inbound rule
+	-pronim o alta isntanta instance2 si alegem sg2 la security groups 
+	-ii copiem private ip adress si din terminalul primei instante dam cd sa fim iarasi pe root directory
+	-dam ping la ip ul privat copiat adineauri si nu va functiona
+	-sa dam ping la google.com va merge deoarece avem outbound traffic dar inbound nu si de aceea nu merge sa ne conectam la a doua insanta
+	-o sa facem asta cat se poate de safe, nu vrem ca oricine de pe net sa poata da ping insantei mele
+	-vrem ca doar insantele din sg1 de ex insance1 sa poata da ping la instance2
+	-deci vom merge la sg2 security group si adaugam inbound rule de ripul icmp - ipv4 si la source lasam custom si scriem sg si ne vor aparea cele 2 security groups si vol alege sg1
+	-astfel vom permite inbound traffic pe protocolul ICMP IPv4 doar de la membrii security group sg2 ONLY, deci l am blocat astfel
+	-se numeste security group chaining, deci setam inbound trafic sa fie permis doar din alt security group
+	-putem face	la fel cu outbound traffic de asemenea
+	-de exemplu, putem bloca sg1 sa poata doar sa trimita ping la security group2, ar trebui sa sterg outbound rule ul curent si sa adaug una pt icmp ipv4 si sa setez destinatia catre sg2
+	-sa incercam sa adaugam nacl
+	-cautam vpc in serarch bar si sub security avem network acls
+	-aici avem 2 una pt cel default una pt myVpc creat de mine
+	-dam pe cel default si vedem ca avem inbound rules 
+	-aici regulile sunt intr o ordine numerotata, aici vedem ca avem rule number 100(care permite trafic de oriunde) si * care este ca un wildcard la sfarsitul setului de regulile
+	-adaugam un rule cu nr 101 de tip all traffic from any soruce is denyed
+	-inca pot da refresh la pagina deci nu a mers restricionarea respectiva
+	-daca schimbam numarul regulii cu 99 va merge deoarece va fi inaintea regulii cu nr 100 care permite orice trafic inboud si nu dupa aceasta cum era anterior cu nr 101
+	-acuma nu va merge sa mai dam refresh la it works page website si nici insanta de sg1 sa mearga la sg2
+	-la sursa putem da un range de ip uri sau un ip exac cu /32 
+	-acestea sunt stateless rules
+	-deci trebuie sa avem si inbound si outbound rules
+	-am sters refula 99 pe care am adaugat o mai devreme
+	-mergem la outbound si vedem ca e aceeasi ca la inbound, deci permite orice acum, toate inblud connections si toate outbound connections
+	-daca adaugam un rule sa permita un protocol inbound va trebui sa o adaugam si outbound la fel, altfel nu va functiona
+	
+AWS Storage Services
+	
+Create and Attach an EBS Volume
+
+	-cream 2 insante in eu-north-1a si eu-north-1b 
+	-punem numele 1A, dam edit la network si alegem subnet-ul de eu-north-1a si security group web access si dam launch
+	-facem la fel doar ca punem numele 1B si alegem subnet-ul de eu-north-1b si web access la security group si fara key pair la ambele
+	-vom avea 2 insante pe 2 availability zones 
+	-mergem la volumes sub elastic block store
+	-avem 2 default pt cele doua insante facute, provin dintr un snapshot
+	-dam create volume, alegem availability zone eu-north-1a, ar trebui sa fie deja ales
+	-la volume type lasam default gp3 si la size punem 10gb in loc de 100, restul le lasam default si dam create
+	-mergem la instances si ne conectam la insance ul din eu-north-1a
+	-dam comanda: sudo lsblk -e7	-aceasta va lista non loop back block devices.
+	-vom atasa volumul nostru la insanta si vom rula acea comanda iar
+	-mergem la volumes si dam refresh si trebuie sa fie available
+	-selectam volumul si la actions dam attach volume
+	-singura insanta pe care o sa o vedem este cea din eu-north-1a deoarece nu poti astasa un volum din eu-north-1b de exemplu
+	-alegem da device name /dev/sdf si dam attach
+	-mergem inapoi pe insatna si rerulam comanda, observam ca avem si noul volum atasat
+	-acum avem discul dar nu avem filesystem pe el, acesta se numeste nvme1n1
+	-rulam comanda: sudo mkfs -t ext4 /dev/nvme1n1  pt a face filesystemul
+	-acum dam: sudo mkdir /data		pentru a face un folder data, daca dam ls / il vom vedea in lista
+	-the way that you mount a volume to linux is through a mount point, nu e ca la win unde avem drive letter like c or d
+	-sudo mount /dev/nvme1n1 /data		-asa vom face ce am zis mai sus: luam disk ul care tocmai a fost adaugat /dev/nvme1n1 si il atasam folderului data
+	-deci prin aceasta comanda vom da mount disck ului la mount point
+	-acuma vom face volume mount persistent
+	-vom deschide file-ul: sudo nano /etc/fstab
+	-dupa care vom merge pe ullima linie si vom adauga asta: sudo nano /etc/fstab' then add '/dev/xvdf /data ext4 defaults,nofail 0 2
+	-ctrl o si ctrl x sa salvam si sa iesim
+	-daca dam cat /etc/fstab vom vedea ca apare si linia adaugata de noi
+	-dam cd /data si ls , nu apare nimic
+	-cream un txt: sudo touch testfile.txt
+	-cream si un fisier: sudo mkdir myfolder
+	-asta pt a demonstra cand ne vom muta in alta insanta sa avem aceleasi date (foldere fisiere) 
+	-acum facem un snapshot
+	-mergem la volumes si la cel facut de noi de 10gb dam click pe coloana name si scriem data-volume
+	-il selectam si dam la actions -> create snapshot, ii dam numele data-snap si dam create snapshot
+	-remeber snapshots nu s create in availability zones ca volumele ci pe amazon S3 care e uns erviciu regional si sunt disponibile de a fi folosite in orice zona de avabilitate
+	-acum putem sa cream un nou volum din snapshot ul nou in eu-north-1b si sa avem aceleasi date ca si in primul din eu-north-1a
+	-il selectam si la actions dam create volume from snapshot
+	-va fi la fel gp3 10gb dar de aceasta data va fi in eu-north-1b si dam create
+	-acuma la volumes vom vedea ca avem un nou volum creat intr-o zona de avabilitate diferita: este available in eu-north-1b
+	-il selectam si dam attach volume si acuma ar trebui sa arate eu-north-1b instance si dam attach
+	-mergem la insances, selectam serverul 1b dam connect
+	-dam comanda: sudo lsblk -e7 si vedem ca avem acel 10gb disk availabile
+	-vom face ca si inainte doar ca nu trb creat filesystem
+	-dam sudo mkdir /data si dupa sudo mount /dev/nvme1n1 si dupa cd /data/
+	-si vedem ca avem datele noastre din prima insanta, deci am mutat datele noastre in diferite zone de avabilitate
+	-acum e atasata unei insante diferite
+	-daca vrem sa fie persistenta adaugam linia aceea cu nano in fisierul respectiva
+	-acuma dam terminate la insante, volumele atasata default o sa fie sterse automat, acuma setrgem snapshot ul si vom sterge dupa si cele doua volume aditionale create de noi
+
+EBS Snapshots and AMI's
+
+	-facem o insanta care va instala un server web dupa vom crea un AMI din acel web server ca dupa sa putem da launch la cate web servere de genul vrem
+	-in ec2 mergem si dam launch insance, lasam totul default, proceed without key pair, la network dam select securoty group si alegem web access
+	-la advanced details dam expand si mergem pana jos si la user data dam copy paste la continutul user-data-custom-ami.sh care se afla in amazon-ebs
+	-verificam ca web access de la security groups sa aiba inbound rule HTTP port 80 from any source
+	-mergem la instances si o alegem pe a noastra si dam copy public ip si in alt tab dam paste si enter si avem acces la web server
+	-ne intoarcem la insances si o selectam pe a noastra care e running si dam la actions -> images and templates -> create image si ii dam numele CustomWebServer
+	-pe partea stanga sub elastic block store dam la Snapshots apare un pending snapshot\
+	-mergem la AMIs sub images si vom vedea ca este un pending AMI
+	-insanta noastra era in eu-north-1b, snapshot urile sunt regionale pt ca sunt in S3, asta inseamna ca nu trb sa pornim instante in eu-north-1a pot fi oriunde, in orice zona de avability in regiunea eu north stockholm de ex
+	-daca vrem putem sa le compiem intre regiuni : la AMIs, selectam AMI-ul mergem la actions si COpy AMI si putem alege alta regiune
+	-totul e pregatit insanta ami si snapshotul
+	-putem veni la AMIs selectam pe a noastra si putem da Launch insance from AMI
+	-sau putem face cu wizard ul regular de la instances , launch insances si acolo la aws macos alegem Browse more AMIs -> MyAMIs si alegem CustomWebServer
+	-deci acuma putem sa alegem sa dam launch la acest CustomWebServer 
+	-no key pair, la network settings la subnet alegem altul decat cel in care este prima insanta creeata in cazu meu era eu-north-1b si voi alege deci eu-north-1b
+	-security group alegem web access si dam launch instance
+	-asta va da launch la o alta insanta in avability zone ul respectiv si va arata fix ca source server, primul creat adica
+	-deci am rulat acea user data o data cand am pronit prima instanta manual si dupa am facut o copie a instantei asa cum era, ebs volume a fost copiat intr-un snapshot si acuma efectiv creeam noi insante din acel snapshot
+	-asteptam dupa aceasta instanta sa fie up and running, copiem ip ul public al instantei si verificam daca pagina web mergesi e ok
+	-acum avem un seb server identic care e running in alta availability zone 
+	-am creat un AMI care a fost folosit sa dea lanuch la instante identice aditionale \
+	-acum dam terminate la cele doua insante 
+	-mergem la AMIs selecram customwebserver si dam de la actions, deregister ami, o sa ne dea si id-ul de la snapshot, il putem copia si cauta la Snapshots ca sa ne fie usor cand stergem spanshot ul in caz ca avem mai multe
+	-mergem la snapshots si putem da search dupa id si sa il identificam pe cel care trebuie sters: il selectam si de la actions dam delete snapshot
+	
+Amazon Elastic File System - EFS
+
+	-dam la search bar si cautam Cloud Shell si intram pe el
+	-dam copy paste la comanda asta aws ec2 create-security-group --group-name StorageLabs --description "Temporary SG for the Storage Service Labs"
+	-copiem id ul de la GroupId, de ex sg-07b499567e9731ea8 si ii dam paste in loc de security id la comenzile de la pct 3 si 4 si punctul 1 de la urm sectiune
+	-trebuie sa creeam un inbound rule pt security group ul nostru pt a ne putea administra instantele
+	-dam copy paste in cloud shell la asta: aws ec2 authorize-security-group-ingress --group-name StorageLabs --protocol tcp --port 22 --cidr 0.0.0.0/0
+	-acuma vrem sa pornim 2 insante din cloud shell, pt asta avem nevoie de latest AMI id, pe care il vom optine dand click pe launch insance din ec2 si dam scropp pana la amazon linux si laga arhitecture vom gasi AMI ID, ii dam copy
+	-ii dam copy paste in comenzile de la punctele 3 si 4 in loc de <lastest ami id> si punem t3.micro si la zone eu-north-1a si b 
+	-dam copy paste la comanda in clod shell: aws ec2 run-instances --image-id ami-0129bfde49ddb0ed6 --instance-type t3.micro --placement AvailabilityZone=eu-north-1a --security-group-ids sg-07b499567e9731ea8
+	-apasam q sa revenim din output la linia de comanda si dam copy paste la urm comanda aws ec2 run-instances --image-id ami-0129bfde49ddb0ed6 --instance-type t3.micro --placement AvailabilityZone=eu-north-1b --security-group-ids sg-07b499567e9731ea8
+	-vom folosi protoculul NFS pt a accesa file system ul nostru
+	-vom adauga o regula la security group sa permintem protoculul NFS din membrii grupului
+	-punem id urile de la secirity group in comanda si dam copy paste in shell: aws ec2 authorize-security-group-ingress --group-id sg-07b499567e9731ea8 --protocol tcp --port 2049 --source-group sg-07b499567e9731ea8
+	-mergem inapoi in ec2 , security groups, gasim grupul StorageLabs si aici putem vedea ca avem cele doua inbound rules
+	-de la SSH putem accesa de oriunde, iar de la NFS putem accesa doar din security group ul nostru
+	-in aws cautam efs si dam create file ssytem si dam numele MyEFS si il lasam in vpc default
+	-la network access lasam doar zonele eu-north-1a si b, stergem pe c deoarece nu avem nevoie
+	-le stergem si security group urile din care fac parte si il specificam pe al nostru pt ambele zone: StorageLabs
+	-acum vom avea mount targets in fiecare dintre zone si sec group va permite accesul de care avem nevoie, next next create
+	-in ec2 ne conectam la cele doua instante si rulam comanda mkdir ~/efs-mount-point pt a crea mount point uri pe ambele insante
+	-apoi vom rula pe ambele insante comanda pt a instala NFS utils: sudo yum -y install nfs-utils
+	-mergem inapoi la EFS, dam click pe myefs si dam copy la DNS name si ii dam paste in comanda noastra intre tls *aici* :/ 
+	-si la linia 27 si 38
+	-dam copy la comanda de pe linia 27 si o rulam pe ambele insante nu va afisa nicio eroare deci merge 
+		sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport fs-03ce1162295924b56.efs.eu-north-1.amazonaws.com:/ ~/efs-mount-point
+	-acum am dat mount la file system
+	-acum ar trebui sa putem creea un file in file system
+	-dam cd ~/efs-mount-point si dupa sudo touch insance1.txt pt a creea file ul, asta facem pe prima insanta
+	-intram pe a doua dam cd ~/efs-mount-point si daca dam ls o sa vedem ca exsita si aici insance1.txt, asa ca vom da sudo touch insance2.txt
+	-dam ls si vedem ca ambele axista pe ambele instante
+	-deci acuma avem 2 insante in 2 zone diferite care sharuiesc acelasi shared file system, deci pot vedea aceleasi date si pot read and write in acelasi timp
+	-acum vom adauga un file system to enforce encription in tranzit
+	-ne intoarcem la EFS si dam la MyEFS -> File system policy -> Edit si dam enable la Enforce In-transit encryption for all clients si dam Save
+	-acuma inapoi la terminal si dam unmount, dar pt a executa comanda asta, trebuie sa dam cd ~ pt a intra in alt folder, pt ca nu putem da unmount din folderul mount point
+	-dam comanda: sudo umount ~/efs-mount-point
+	-acuma vom incerca sa rulam iar comanda sudo mount , dar vom vedea ca nu avem access deoarece NFS utils nu suporta aceasta optiune pt encription in transit
+	-asa ca vom instala EFS utils de la AWS pe ambele insante: sudo yum install -y amazon-efs-utils
+	-vom rula o comanda diferita de mount, care da mount de tipul EFS cu optiunea tls care va da enable la ecription, transport level security
+		sudo mount -t efs -o tls fs-03ce1162295924b56.efs.eu-north-1.amazonaws.com:/ ~/efs-mount-point
+	-dupa care dam iarasi cd ~/efs-mount-point , dam ls vedem cele doua txt uri 
+	-we have now enforced encription and transit dar a trebuit sa folosim efs utils decat nfs client
+	-dam terminate la cele doua instante si inapoi la efs file system dam select la myefs si dam delete
+	
+AWS S3
+
+	-cautam in search bar s3 si intram si dam create bucket, care este containerul in care o sa ne depozitam obiectele(file -uri de orice tip)
+	-acesta este un serviciu global(nu putem alege o regiune), deci numele bucket ului trebuie sa fie unic, deoarece este parte dintr-un URL deci trb sa fie unica global pt ca este folosit pe internet
+	-o sa o denumim mybucket-2ku8hsa7ush1(caractere si cifre random ca sa fie unica)
+	-Directory e pt extremly low latency, dar noi alegem General purpose, lasam ACLs disabled
+	-Block all public access inseamna ca nu putem sa dam enable la public access pt obiectele din acest bucket cu aceasta setare enabled, daca avem nevoie sa facem asta dam unenable la block all public access
+	-bucket versioning, putem sa ii dam enable si va pastra diferite versiuni ale obiectelor noastre in caz ca vrem sa revenim la versiuni mai vechi daca avem nevoie
+	-default encription e enabled by default , bucket key ramane enabled si object lock disabled, dam create bucket
+	-dam click pe mybucket si la objects dam click upload -> add files , in folderul amazon s3 avem niste poze, selectam 2 din ele apple si papaya si dam upload
+	-alegem standard la storage class, restu lasam asa si dam upload
+	-ne intoarcel la objects in bucket ul nostru si vedem cele doua file-uri, dam click pe apple.jpeg, aici avem url ul obiectului si key-ul care este numele obiectului, file ului
+	-daca dam copy la url si il accesam in alt tab o sa vedem ca nu avem permisiune sa il accesam
+	-putem creea foldere pt a mima o ierarhie, dam create folder deasupra la obiecte si il denumim mydocuments si dam create folder
+	-vedem ca apare mydocuments/ in lista de obiecte, dam click pe el si dam upload la rasberry.jpeg si dam click pe upload si va aparea ca un fel de ierarhie, avem lista cu cele doua obiecte si folderul in care avem alt obiect 
+	-daca dam click pe rasberry.jpeg vom vedea ca key-ul acestuia are numele mydocuments/rasberry.jpeg
+	-pt a da permisiuni bucket ului venim la nivelul acesteia unde avem cele doua obiecte si folderul si mergem la permissions
+	-initial nu putem adauga un policy care permite public access, deoarece block all public access este enabled
+	-ii dam edit si debifam casuta cea mai de sus, dam save scriem confirm si asta ne va permita sa creeam un bucket policy 
+	-dam pe edit la Bucket policy si in consola, dam add new statement 
+	-la "Principal": scoatem {} si punem "*" in loc
+	-la "Action": scoatem [] si scriem "s3:GetObject",
+	-dedesubt punem: "Resource": "Bucket ARN/*" - Bucket ARN este chiar deasupra consolei ii dam copy paste si il punem intre "" inainte de /*
+	-asta inseamna ca toti Principals au voie sa faca cationea s3 getobject pe resource si e numele bucket ului
+	-trebuie neaparat sa avem /* ca sa aplicam acest statement ca obiectele sa poate getobject pe ele insasi si dam Save changes
+	-acum putem copia url ul obiectelor si sa le accesam in alt tab, acuma am dat enable la public access pt obiectele mele
+	
+	-creeam un nou bucket pe care il denumim mywebsite-4od8ru13fx si deselectam optinea pt block all public access si bifam i aknowledge si dam create bucket jos
+	-acum mergem la buckets pe mywebsite la tab ul Properties dam scroll pana jos si la static website hosting dam edit, enable, lasam hosting static website 
+	-acum la index document scriem index.html care se incarca cand intram pe site si dam save changes 
+	-acuma din bucket ul nostru mywebsite, dam scroll pana jos si avem endpoint ul pt site ul nostru 
+	-acum avem nevoie de un file pt index.html, intram in folerul amazon-s3 si aici este index.html ul cu site ul nostru scris in el
+	-pe ultimele linii ale acestuia apar 3 <img> tag uri cu numele imaginilor ce vor fi afisate pe site
+	-ne intoarcem la bucket mywebsite mergem la objects si uploadam 3 imagini din folerul fruit images
+	-inainte sa dam pe upload putem lua numele lor si sa le punem in index.html la finalul acestuia in loc de YOUR_IMAGE_FILENAME_HERE gen apple.jpeg si in loc de image description scriem doar numele pozei gen apple
+	-dam save la index.html si mergem inapoi pe aws si dam upload la imagini, dupa care dam upload si la index.html
+	-acum avem tot ce ne trebuie doar ca trb sa avem si permisiuni
+	-in bucket ul nostru mergem la permissions dam edit la bucket policy, add new statement 
+	-la Principal punem asa : "*",  -la Aciton punem asa : "s3:GetObject", -dupa asta dam enter facem alta linie si scriem: "Resource": "bucket arn/*" copy paste de mai sus de la bucket ARN
+	-dam save changes si mergem la properties si in josul paginii la static website hosting dam click pe endpoint si vedem ca merge si vedem pozele cu fructe
+	-nu e secure deoarece e doar http si trb sa folosim cloud front in front of out bucket
+	-dupa stergem toate obiectele ale unui bucket ca dupa sa putem sterge si bucket ul proproiu zis 
+	
+Amazon Database Services
+
+	-cautam rds in search bar si mergem la databases pe stanga, dam create database, alegem mysql la engine options
+	-la templates alegem free tier, punem numele my-rds-db, username lasam admin, punem parola si o confirmam
+	-lasam db t4 care e default, si 20 de gb, nu ne conectam la nimic, vpc lasam default, si la subnet tot default, public acces lasam no
+	-la security group punem sg1, la zone lasam no preference, lasam pass auth si dam create database
+	-la conectivity si security avem endpoint si port number pt a ne conecta la bd din aplicatie, take snapshot de la actions e pt backup o imagine a db la un animit moment in timp
+	-dam create read replica, ii punem db insance identifire my-replica, sursa e setata pe db ul nostru si lasam totu default
+	-port ul replicii ramane acelasi dar endpoint ul e schimbat unpic
+	-putem intra in sg1 la security groups la ec2 si adauga inbound rule pt mySql pe portul lui pt a permite conexiunile la baza de date
+	
+Amazon DynamoDB Tables
+	
+	-cautam dynamodb in search bar
+	-baza dedate cu dymanodb exista deja, noi doar creeam tabele in ea, deci dam create table
+	-in folderul cu materiale pt curs gasim in folderul amazon-dymanodb fisierul create-table-add-data.md il deschidem si avem instructiuni
+	-la table name punem myorders, la partition key punem cilentid, la fel ca si la sort key, tot clientid punem, astea sunt singurele setari pe care trebuie sa le facem
+	-daca dorim putem face si alte setari la table settings de exemplu, dam pe customise settings si sa alegem table class standard sau infrequently accessed pt a eficientiza costurile
+	-putem modifica si read write capacity settings, adica sa setam cate operatii de scriere sau citire avem nevoie, avem si capacity calcualtor care ne ajuta sa intelegem impactul setarilor noastre
+	-lasam pe default la table settings si dam create table
+	-intram in acelasi folder si mai avem un fisier batch-write.json, unde avem mai multe iteme care vor fi adaugate in tabelul nostru
+	-avem specificat tabelul myorders , dupa care avem un PutRequest si un Item, sunt 20 de iteme diferite in fisier
+	-fiecare are clientid-ul care e un email. Acesta este o valoare unica asociata fiecarui client. Avem si created care este un time stamp si restu de atribute sku, category etc
+	-acestea sunt ori string values "S" sau number values "N"
+	-acest fisier trebuie sa fie uploadat in AWS cloud shell
+	-cautam in search bard cloud shell unde dam la actions -> upload file si alegem batch-write.json, dam un ls in command line sa ne asiguram ca e acolo 
+	-ne intoarcem in create-table...md si avem comanda:  aws dynamodb batch-write-item --request-items file://batch-write.json 
+	-comanda va scrie toate cele 20 de iteme in tabelul nostru, ii dam copy paste in terminal si daca scrie unprocesseditems: {} e bine asta inseamna ca toate itemele au fost scrise in tabel
+	-inapoi in dynamodb console la explore items si selectam myorders si vedem ca avem 20 de iteme returnate
+	-am mentionat anterior ca createid care e primary key trebuie sa fie unica, dar clientii pot sa dea mai multe comenzi 
+	-cand avem si primary key si sort key create, trebuie ca combinatia dintre cele doua sa fie unica in tabel 
+	-deci in acest caz de exemplu client04 poate da mai multe comenzi deoarece time stamp si data stamp cel mai probabil vor fi diferite
+	-scrie read capacity unit consumed 0.5 , deci avem read capacity units si write capacity units, asa alocam cantitatea de performanta tabelului nostru si cate operatii putem efectua si astfel suntem charged
+	-tot la explore items avem scan si query, ce s a intamplat acu a fost un scan(cand am dat run) adica sa vedem cele 20 de iteme
+	-de aici putem filtra itemele in functie de clientid de ex si sa vedem doar clientid: alegem scan, myorders, la select attribute projection alegem specific attributes si la specific attributes to project alegem clientid si dam run
+	-query api aplica query pe tot tabelu si apoi putem filtra rezultatele 
+	-vom folosi scan api ca sa gasim date
+	-dam copy paste in cloud shell la urmatoarea comanda:
+		aws dynamodb scan \
+		--table-name myorders \
+		--filter-expression "category = :cat" \
+		--expression-attribute-values '{":cat":{"S":"Electronics"}}'
+	-o sa ne dea toate itemele care fac parte din categoria Electronics, 3 la numar, daca apasam pe space putem naviga prin ele si daca apasam q o sa iesim
+	-  --filter-expression "category = :cat" \   -asta e conditia de filtrare a itemelor unde atribitul category este egal cu o valoare definita de noi (:cat)
+	-  --expression-attribute-values '{":cat":{"S":"Electronics"}}'   -asta defineste valoarea lui :cat folosit in expresia de filtrare de mai sus, in cazul nostru "Electronics"
+	-dam copy paste in cloud shell la urmatoarea comanda:
+		aws dynamodb scan \
+		--table-name myorders \
+		--filter-expression "qty > :q" \
+		--expression-attribute-values '{":q":{"N":"2"}}'
+	-  --filter-expression "qty > :q" \   -asta e conditia de filtrare a itemelor unde atribitul qty trebuie sa fie mai mare decat o valoare definita de noi (:q)
+	-  --expression-attribute-values '{":q":{"N":"2"}}'   -asta defineste valoarea lui :q folosit in expresia de filtrare de mai sus, in cazul nostru 2
+	-vom folosi query api ca sa gasim anumite inregistrari in tabel
+	-dam copy paste in cloud shell la urmatoarea comanda:
+		aws dynamodb query \
+		--table-name myorders \
+		--key-condition-expression "clientid = :clientid" \
+		--expression-attribute-values '{":clientid":{"S":"client01@example.com"}}'
+	- --key-condition-expression "clientid = :clientid" \   -asta e conditia pt query sa gasim itemele pt care clientid este egal cu valoarea specificata(:clientid)
+	- --expression-attribute-values '{":clientid":{"S":"client01@example.com"}}'   -defineste valoarea pt clientid: folosit in key condition expression de mai sus
+	-dam copy paste in cloud shell la urmatoarea comanda:
+		aws dynamodb query \
+		--table-name myorders \
+		--key-condition-expression "clientid = :clientid AND created BETWEEN :date1 AND :date2" \
+		--expression-attribute-values '{":clientid":{"S":"client01@example.com"}, ":date1":{"S":"2023-01-01T00:00Z"}, ":date2":{"S":"2023-01-31T23:59Z"}}'
+	- --key-condition-expression "clientid = :clientid AND created BETWEEN :date1 AND :date2" \   -asta e conditia pt query sa gasim itemele pt care clientid este egal cu valoarea specificata(:clientid) si pt care created date pica in tervalul specificat, adica intre :date1 si :date2
+	- --expression-attribute-values '{":clientid":{"S":"client01@example.com"}, ":date1":{"S":"2023-01-01T00:00Z"}, ":date2":{"S":"2023-01-31T23:59Z"}}'   -defineste valorile pt clientid: , date1: si date2 folosite in key condition expression de mai sus
+	
+	
+AWS Cloud Formation
+
+	-vom folosi aws cloud formation pt a creea si updata stack-uri(sunt creeate cu template uri si contin practic ce descriem pt a fi creat in template uri de ex ec2 insance security group din care face parte ec2 insance volume si s3 buckets atasate insantei)
+	-cautam cloud formation in search bar si dam Create Stack si putem creea un template direct din aws sau uploada unul deja existent din pc sau s3 sau github
+	-de obicei, daca avem ceva de facut in cloud formation, cautam cel mai apropiat template de ce avem noi nevoie si il modificam conform specificatiilor noastre specifice
+	-in folderul aws-cloudformation avem 3 template uri : 1 2 si 3ec2 template uri formatate yaml
+	-data e ok, e un format valid pt versiunea de template
+	-descirerea template ului e sugestiva: va creea o insanta ec2 cu un security group atasat pt acces SSH
+	-in resources, creeam prima oara security group ul de tipul ec2 insance ca ulterior sa il putem atasa insantei noastre 
+	-dupa care specificam un ingress rule(inbound rule) pt security group, from si to port 22 cu orice ip(0.0.0.0/0)
+	-dupa creeam insanta de tipul ec2 si la ami id trebuie sa venim la ec2 sa dam launch insance selectam ami ul de amazin linux si compiem ami id ul si ii dam paste in fisierul nostru in locul celui existent, facem la fel si pt celelalte doua templaturi 1 2 si 3
+	-la insance type punem t3.micro, dupa care folosim un refrence intrinsic funtion care cauta InsanceSecurityGroup ul si il ataseaza instantei noastre
+	-venim inapoi la cloud formatiom unde creeam stack ul si alegem template is ready si upload a template file dupa care alegem primul template, dam next, ii punem numele ec2-insance-lab
+	-nu trebuie sa specificam permisiuni specifice deoarece in acest caz va prelua permisiunile asociate cu contul nostru de user, User
+	-comportamentul default este ca daca apar probleme in procesul de creare, va da roll back si va da delete si termiante la toate resursele
+	-deci putem lasa default urile dam next scroll down si submit
+	-la events putem vedea exact ce se intampla in timp real: creeaza insance security group dupa care va da launch la instance, daca venim inapoi la ec2 vedem ca o sa avem un pending instance 
+	-daca bifam insante si dam la security putem vedea ca foloseste un security group care a fost creat in cloud formation
+	-ne intoarcem la cloud formation la stack ul nostru si dam la resources si putem vedea exact ce resurse s au creat aici
+	-daca dam click pe link ul de la phisical id ne va duce direct la insanta din ec2, asta este un phisical id btw
+	-logical id-ul este o referinta la un item din template iar phisical id te link uieste la resursa din afara cloud formation ului
+	-mergem la events dam refresh si o sa vedem ca este complete tot, avem o instanta ec2 creata
+	-mergem pe al doilea template si vedem ca are resursele inital create dar are in plus configurarea pt crearea si atasarea unui volum instantei(has the original items but has some additional items too)
+	-size ul fa vi 10gb si ne asiguram ca availability zone ul este cel al instantei preluand-ul direct in properties
+	-mai jos folosim iar functii referinta pt a specifica instanta careia urmeaza sa ii atasam ebs volume ul 
+	-inapoi in cloud formation la stack ec2-insance-lab dam sus la Stack Actions si dam Create change set for current stack
+	-dam replace current template, upload a template file si il alegem pe al doilea template 2-ec2-template.yml si dam next next submit
+	-acuma vedem care sunt changes adica schimbarile care vor urma sa se intample, acum nu s-a schimbat nimic, doar ne arata diferenta dintre template uri
+	-ne zice ca se va creea un volum ebs si va fi atasat instantei noastre ec2, daca ne convine mergem sus dam refresh si dam Execute change set si dam execute din nou
+	-acuma avem un update in progress, daca mergem a ec2 selectam instanta si mergem la storage si daca dam refresh vedem si cel de al doilea volum cu size ul specificat de noi, 10gb
+	-mergem inapoi la stack si vedem update complete
+	-mergem la al treilea template care va adauga insantei un amazon s3 bucket, deci poate instanta noastra are nevoie sa se logheze intr un s3 bucket
+	-din nou, va retine resursele originale si va adauga resursa necesara pt a crea un s3 bucket: tipul este aws s2 bucket dar numele trebuie sa fie unic, deci dupa bucket-name- aici punem caractere random cifre si litere si dam save
+	-venim inapoi la stack ul nostru si la stack actions dam create change set for current stack, replace current template, upload a template file, choose a file si alegem al treilea template next next submit
+	-dam refresh la changes si vedem ca va adauga un s3 bucket mergem sus si dam execute change set de doua ori
+	-daca mergem la amazon s3 nu va dura mult pana vedem bucket ul nostru ca fiind creat, nu va dura mult si update-ul va fi complete
+	-asa putem folosi amazon cloudformation pt a da deploy la resurse si sa dam change la deployed stacks
+	-dupa ce am termiant cu acest stack dam pe delete, ne va avertiza ca va sterge toate reusrsele din stack, putem configura si un delete policy daca vrem sa nu stearga anumite resurse
+	-mergem la events si vom vedea ca incepe sa stearga la s3 nu mai e bucket ul si volumul e dus si insante este terimata si ea
+	
+	-vom crea un VPC folosind un template aws cloudformation
+	-in aws-cloudformation avem inca un file cu un template pt a crea un vpc cu tot ce trebuie subnets private si public pt insante ec2, internet gateway pt a comunica intre ele, route table
+	-in cloudformation dam create stack si alegem template is ready, upload a template file si alegem vpc-with-cloudformation.yml
+	-dam next si punem un stack name cf-vpc si la environment name punem la fel cf-vpc next next submit
+	-dupa un min doua la outputs vedem ce resurse au fost create, la fel ca si in resources unde avem id-urile fizice
+	-daca dam pe phisical id ul de la vpc o sa ne duca vpc management console si vedem ca are cf-vpc ca si nume
+	-daca mergem la subnets o sa vedem ca toate cele 4 au in nume prefix ul aceasta cf-vpc, la fel si pt cele 2 route tables cel privat si cel public
+	-daca il selectam pe cel public si mergem la routes vedem ca exista ruta si pt internet gateway ul nostru
+	-mergem inapoi la stacks si il alegem pe cf-vpc si ii dam delete
+
+Amazon Elastic Beanstalk	
+
+	-cautam in searchbar cum e mai sus si dam Create application, care va creea o aplicatie si un environment asociat acesteia
+	-alegem web server environment si punem la application name my-eb-website restu pana la platform lasam default
+	-la platform alegem node.js, lasam sample application si single instance si dam next
+	-dam create and use new service role, il va face pe acesta aws-elasticbeanstalk-service-role si la ec2 key pair o alegem pe singura cu numele nostru de root user si la ec2 insance profile alegem s3readonly, pe care trebuie neaparat chiar daca nu avem nevoie si nu vrem altfel crapa
+	-next, vpc alegem cel default 
+	-la instance settings bifam public ip adress si selectam 2 anvability zones a si back, restu le lasam default si dam next
+	-la root volume type alegem gp3 - General Purpose 3 SSD pt ca enviroment ul sa foloseasca launch template nu launch configuration ca o sa crape
+	-la instance metadata service lasam bifata optiunea deactivated 
+	-la security groups alegem WebAccess care are portul 8 deschis pt web server 
+	-la insance type lasam doar t3.micro si dam next
+	-la monitoring lasam basic si la managed platform updates debifam activated dam pana jos si dam next 
+	-la review page dam pana jos si submit, o sa vedem niste event uri dma refresh sa le mai vedem si o sa ia cateva min sa fie gata
+	-desi noi am selectat un security group, tot va fi creeat unul, la final trebuie sa scrie ultimul event successfully launched enviroment my eb wesite env
+	-la domain avem un link catre web serverul nostru daca dam pe el ne baga direct pe siteul basic creat de nodejs
+	-daca mergem la ec2, putem vedea instanta daca dam click pe ea ne putem conecta la ea si putem vedea ca suntem pe un server manageruit de elastic beanstalk
+	-daca selectam instanta si mergem la security groups vedem ca avem 2 grupuri, unul pe care l am ales noi si altulu care a fsot creat automat
+	-asa functioneaza beanstalk, la application verions nu avem nimic deocamdata dar putem incarca diferite versiuni ale aplicatiei
+	-la enviroment, putem vedea partea de configurari, aici putem adauga baze de date sa schimbam configurarile de networking si asamd
+	-la events putem vedea ce se intampla si la health, la logs putem cere accesul la log uri, avem monitoring unde putem vedea masuratori ale unor servicii cpu  usage newtork
+	-ne putem menegiui instalarea, putem sa dam update si deploy la versiuni noi de cod 
+
+AWS CodePipeline with AWS Elastic Beanstalk
+
+	-cum CodeCommit nu mai permite creatul de noi repositoryes pt conturi noi de AWS trebuie sa facem un repo pe github cu numele mynodeapp
+	-pt a ne conecta remote din insanta noastra ec2 la acest repository sa putem face clone push commit sau asa trebuie sa o facem prin SSH
+	-prin HTTPS nu putem deoarece ne trebuie Git Credentials Manager care nu este suportat de AWS
+	https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=linux
+	https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account
+	-in aceste doua link uri avem tutorialu cum sa facem un ssh si sa il adaugam pe cont si dupa sa ne conectam prin el la repo ca sa il clonam
+	-pornim un cloudshell si incepem prin a creea acest SSH key
+	-dam comanda asta: ssh-keygen -t ed25519 -C "david_1565@yahoo.com"	,dam enter sa o salveze in locatia default
+	-putem sa punem si un passphrase si sa confirmam scriind-o din dou sau putem da enter de doua ori sa continuam fara passphrase
+	-pornim ssh agent in backround pt a adauga key ul in el ulteriror
+	-dam comanda:  eval "$(ssh-agent -s)"
+	-adaugam ssh private key ul agentului nostru cu comanda:   ssh-add ~/.ssh/id_ed25519
+	-acum deschidem file ul unde este public key ul nostru si ii dam copy:   cat ~/.ssh/id_ed25519.pub
+	-pe github in dreapta sus dam pe poza noastra, settings si SSH and GPG keys
+	-Click New SSH key si punem titlul ec2-linux, lasam authentification key si in field ul pt key dam paste la ce am copiat mai sus si Add SSH Key
+	-acum avem repo ul nostru clonat pe server, dam cd mynodeapp si dupa ls vedem ca avem doar readme file ul pe care puteam sau nu sa il adaugam cand am creeat repo ul
+	-daca dam comanda git status, vedem ca este un folder git
+	-de sus dreapta dam upload la nodejs.zip pe care l am downloadat de aici https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/tutorials.html
+	-dam cd .. si ls si putem vedea repo ul si zip ul
+	-dam comanda: unzip nodejs.zip -d mynodeapp , pt a dat unzip la fisierele din arhiva in repoul nostru, dam cd mynodeapp si ls si vedem fisierele unzipuite
+	-daca dam si comanda git status vom vedea ca sunt file uri untracked sau unstaged adica ne commituite sau pushate pe repo
+	-facem un edit inainte sa facem add commit si push, dam comanda:	nano index.html pt a intra in modul de editre in file ul respectiv si modifica culoare backround ului
+	-dupa don ctr x , scriem y, si dam enter pt a salva si iesi din edit mode
+	-acum dam comanda: git add .	, pt a pregati toate file urile din folder pt un commit
+	-acum dam: 		git commit -d "initial commit"		pt a face un commit cu mesajul dintre ""
+	-acuma dam   git push   pt a trimite comitul catre repo sa se si aplice schimbarile
+	-va scrie Everything up-to-date deci nu e ok
+	-dam git commit simplu si dupa rulam cele doua comenzi git config --global user.name "Your Name" si cea pt email
+	-dam iar git commit, scriem measajul de commit in nano dam ctrl x , scriem y, enter si dupa dam iar git commit si git push de data aceasta va functiona
+	-acum totu e ok fisierele sunt pe repo
+	-ne intoarcem inapoi in codecommit in developer tools si in meniul din stanga dam la pipeline -> pipelines si dam create pipeline
+	-scriem numele mynodeapp si alegem superseded execution si il lasam sa creeze un new service role pt noi
+	-acum la add source stage alegem github version1, si dam authorize sau ce dam si e totul ok apare cu verde
+	-alegem reou ul  mynodeapp si branch ul main si lasam github webhooks
+	-acuma suntem la etapa optiunala Build stage unde putem sa ne verificam si sa build uim artefactele, sau sa dam build la deployment files sau sa verificam codul, dar in cazu nostru dam skip
+	-acuma la Add deploy stage alegem AWS elastic beanstalk alegem numele aplicatiei noastre si al enviroment ului si dam next
+	-si asta e tot ce trb sa facem dam jos si dam create pipeline
+	-ne duce in pagina de pipelines unde putem vedea ca a detectat niste schimbari in github si va da push la aceste schimbari in elastic beanstalk
+	-acum este succeded acuma s a mutat de la source stage la deploy stage la elastic beanstalk
+	-daca ne intoarcel la beanstalk si dam pe enviroment si dupa la events o sa vedem ca avem un event updatat care se intampla chiar acum in timp real
+	-si daca dam click pe link ul de la Domain o sa vedem ca are backroundu albastru acuma cum l am schimbat noi inainte sa dam add commit push
+	-deci vedem ca am facut o schimbar ein cod si a dat push la cod prin github 
+	-ne intoarcem in cloudshell sa mai facem o schimbare in index html cu nano si sa i dam push
+	-deci dam comanda nano index.html  dam save si acum dam iar git add .  si dupa git -m commit "Edited index"  si dupa  git push si nu ne va mai intreba iar de identitate
+	-acuma daca revenim la pipeline vom vedea acest update de indata si apare si mesajul de commit in source
+	-venim pe site si dam refresh si vedem ca o sa apara mesajul schimbat
+	-acuma putem sa dam push la update uri prin github folosind cloudshell ul cu comenzi git si asta va da push la schimbari pana in aplicatia noastra prin code pipeline4
+	-putem lasa pipelineu nu o sa ne coste nimic dar trb sa stergem enviroment si appilcation in aceasta ordine deoaree application poate contine mai multe enviromenturi
+	
+Route 53 - Register a Domain(.com)
+
+	-intram pe route53 in search route si pe stanga dam la Registered domains si dam pe Register Domain
+	-cautam daca domeniul este disponibil de ex davidpopescu.com sau .link e mai ieftin , dam select pe unul din ele si dam proceed to checkout
+	-debifam auto-renew si dam next, completam datele noastre si cardu cred
+	-daca da fail intram pe linku catre support si vb cu ei 
+
+Amazon CloudFront Distribution
+
+	-mergem la s3 si va trebui sa creeam un nou website bucket 
+	-intram in folderul aws la amazon-s3 si intram in index.html si punem 3 denumiri de poze la sf documentului daca nu sunt deja din lectiile trecute
+	-mergem in amazon s3 pe web si dam create bucket, la bucket name ii dam numele: mycloudfrontwebsite-dq8ku5ah2  la sf punem caractere random sa il facem unic
+	-debifam block public access si bifam i acknowledge si dam create bucket restu lasam asa 
+	-acum mergem in bucket dand click pe name din amazon s3 -> buckets si dam Upload la index.html si cele 3 imagini alese si dam upload
+	-acuma mergem la properties in bucket ul nostru dam scroll jos si mergem la Static website hosting si dam Edit 
+	-la static website hosting dam enable si la index document scriem index.html al nostru si dam Save
+	-acum mergem la Permissions si la Bucket policy dam Edit -> Add	a new statement 
+	-la "Principal": scoatem {} si punem "*" in loc
+	-la "Action": scoatem [] si scriem "s3:GetObject",
+	-sub "Action" dam enter new line si scriem "Resource": "" si intre "" dam copy paste la Bucket ARN de mai sus urmat de /* la sfarsit inainte de "
+	-dam save changes
+	-acuma ar trebui sa avem un site static care merge, daca mergem la Properties si dam jos si apasam pe link ul de la Static website hosting ne va duce pe site ul nostru cu cele 3 imagini
+	-observam ca avem http nu https deci nu e secured, mergem la certificate manager si dam pe Request a ceritificate
+	-lasam bifat Public certificate si ne trebe Fully qualified domain name pe care il gasim la Route 53 si sub DNS management dam click pe Hosted zone si dam pe davidpopescu.com si ii dam copy de sus de unde scrie public de ex si ii dam paste la aws certificate manager la fully qualified name
+	-lasam DNS Valdiation si dam Request, dupa care ne da la List certificates si dam refresh de pe buton de sus dam click pe ceritificat si la Domains dam pe Create records in Route s3 si dam Create records
+	-ne intoarcem la route 53 la hosted zones de unde am dat copy la dns name si dam refresh si vedem ca CNAME record a fost creeat 
+	-ne intoarcel a aws ceritificate manager si venim un nivel mai sus la Certificates dam refresh si dupa cateva minute trebe sa apara la Status Issued si bifat
+	-dupa ce e gata si apare cu verde mergem la route 53 la hosted zones si la domeniu meu si bifam record ul cu tipul CNAME si dam Delete record
+	-acuma mergem la cloudfront si dam Create clodfront distribution 
+	-la origin domain sub Amazon s3 avem mycloudfrontwebsite-dq8ku5ah2 si il selctam pe el, aws va vedea ca e static website si ne va intreba daca dorim sa folosim Website endpoint si zicem ca da si dam click pe el
+	-lasam totu default pana la Web Application Firewall si dam Do not enable security protections
+	-si mai jos unpic la Settings avem Custom SSL certificate si il alegem pe al nostru la ACM certificates apare cu domeniul nostru
+	-mai sus de certificate avem alternate domain name cname si aici punem numele complet al domeniului nostru davidpopesci.com acesta e domain name pe care il vor folosi userii sa se conecteze la aceasta cloudform distribution si dam create distribution
+	-va lua unpic sa se creeze, mergem la route 53 si dam create record lasam numele domeniului nostru nu scriem nimic si bifam Alias 
+	-la Route traffic to alegem Alias to CloudFront distribution, regiunea e specificata deja pt noi
+	-si mai jos selectam distributia noastra davidpopescu.com, lasam simple routing si dam create record
+	-asteptam statusu sa se faca din pending insync , asteptam sa se faca distributia si record ul si incercam acuma sa navigam la https://davidpopescu.com sa ne asiguram ca e cu certificat si gata avem un site securizat
+	-mergem la cloudfront distributions si dam disable dupa ce o selectam si dupa ce se termina de disabled venim inapoi si ii dam delete
+	-ne intoarcem si la route 53 si selectam la type A record si ii dam Delete record, celelalte ns si soa sunt f importante nu ne atingem
+	-ne intoracem la certificate manager si lasam certificatul acolo il putem folosi si cu alte servicii 
+
+Launch Docker Containers on AWS Fargate(serverless implementation of Amazon ecs)
+
+	-mergem la elastic container service si pe stanga mergem la Clusters(trb sa creeam un cluster apoi un task definitions si dupa putem porni task uri in cluster ul nostru) 
+	-dam Create cluster ii punem numele my-fargate-cluster si lasam AWS fargate la infrastructure si dam Create
+	-asta va face sa mearga la cloud formation si va face un cluster, putem da si view in cloudformation si ne va duce acolo
+	-prima oara o sa dea fail trb sa stergem stack ul din cloud formation si sa revenim sa elastic container service si sa facem alt cluster si o sa mearga
+	-acum avem clsuter ul nostru facut intram pe el, aici avem partea de services(creeam unul pt a defini numarul de task uri pe care le vrem sa mearga) si tasks(unde putem porni task uri individuale - adica un container individual)
+	-la infrastructura n avem treaba ca folosim fargate dar daca foloseam ec2 lanuch type puteam manageui infrastructura aici
+	-vrem sa dam launch la un task dar avem nevoie mai intai de un task definition, mergem la task definitions pe stanga si dam create new task definition si dam numele nginx-container, lasam AWS Fargate selectat 
+	-daca o sa lasam containerul sa dea call la orice actiuni API pe alte servicii va trebui sa specificam un task role nu avem nevoie in acest caz-
+	-task execution role e folosit de agentul containerului sa faca requesturi API si va creea un nou rol pt noi
+	-la cointainer - 1 la name scriem nginx-container si la image URI scriem nginx:latest pt a lua cea mai recenta imagine
+	-lasam log collection e foarte folositoare si dam Create
+	-acuma ne intoarcem la Clusters dam pe clsuterul nostru, dam pe Tasks -> Run a new task
+	-lasam default pana la depolyment configuration unde lasam Task selectat si la family alegem nginx-container lasam 1 desired tasks 
+	-la networking are vpcu default selectat care are o setare de public ip enabled deci e ok, insantele vor avea ip uri publice 
+	-vrem sa selectam la security group web access care e in vpcu default , public ip e on si dam Create
+	-acuma in cluters my-fargate-cluster la tasks vedem ca imd o sa avem task ul nostru running
+	-daca dam click pe task id si mergem la networking avem public ip ii dam copy si daca ii dam peste pe alt tab in browser ne va duce la welcome to nginx o pagina simpla 
+	-mergem la clusters my-fargate-cluster la tasks si selectam task ul si ii dam stop selected 
+	-la Services dam Create, lasam fargate, la deployment configuration lasam Service de data asta si la family alegem nginx-container
+	-la service name scriem my-service si la desired tasks punem 2 si la networking dam x la sg default si punem webaccess al nostru
+	-public ip e on din nou lasam asa, la service daca aveam un load balancer puteam sa il adaugam aici 
+	-dam Create si deindata ce serviciul este gata o sa dea launch la 2 task uri si o sa aiba 2 task uri care sunt running mereu, daca mergem la tab ul tasks vedem ca le avem pe cele doua task uri care sunt up and running
+	-odata ce avem task definition si cluster facute putem face deploy la task uri(containere) foarte usor sa dam enable la autoscaling, la load balancing 
+	-acuma ca am terminat, trebuie sa venim la Services il selectam si dam Delete service, selectam Force delete sa fim siguri ca sterge containerele active si scriem delete
+	-asta va sterge serviciul, cluster ul trb sters separat daca vrem, dar nu ne costa nimic cat timp nu e niciun running task care nu ar trebui sa fie pe cluster acuma
+	
+AWS Lambda
+
+	-in foledrul aws-lambda avem working with lambda intram in el, vom creea un lambda function care da log la mesaje in amazon cloudwatch logs
+	-copiem codul de python:
+		import logging
+		import json
+
+		# Configure the logging
+		logger = logging.getLogger()
+		logger.setLevel(logging.INFO)
+
+		def lambda_handler(event, context):
+			# Extract the message from the event. Assuming the input is a simple JSON object {"message": "your message here"}
+			message = event.get('message', 'No message provided')
+			
+			# Log the message
+			logger.info(message)
+			
+			return {
+				'statusCode': 200,
+				'body': json.dumps('Message logged successfully!')
+			}
+	-in search bar cautam lambda si dam Create function, lasam author from scratch si ii dam numele WriteToCloudWatch
+	-la runtime alegem Python 3.12 la latest supported, arhitecture lasam x86_64
+	-daca vrem ca lambda noastra sa poata interactiona cu alte servicii amazon vom avea nevoie sa adaugam permisiuni
+	-default va creea un nou rol cu basic lambda permissions care vor da acces la cloudwatch logs, deci il vom lasa asa cum e7
+	-alternativ, putem folosi alt existing role sau sa creeam pe loc un nou role caruia ii adaugam aws policy templates 
+	-la advanced settings lasam asa nu bifam nimic si dam Create function 
+	-o sa ne duca pe pagina functiei noastre si mergem la Code, unde il avem pe cel default pe care il stergem si dam copy paste la codul nostru de python copiat anterior si dam deploy
+	-mergem la test si vom creea un test event, mergem in fileul nostru si copiem codu de la pct 2:
+		{
+			"message": "Hello, CloudWatch!"
+		}
+	-si in event json ii dam paste in loc de ce era by default si ii punem numele la event name myevent
+	-ii dam Save dupa care run a test event dam click pe Test
+	-vom vedea un green banner sus care zice ca e succeded si avem un response cu cod 200 care e ok 
+	-aici putem vedea si alte detalii de ex cat a durat executia functiei, ce versiune a functiei a fost folosita, $LATEST este versiunea editabila a codului unde tocami am dat paste la codul nostru adineaori, putem de asemenea publica mai multe versiuni in timp ce facem modificari
+	-mergem la monitor si dam pe View CloudWatch Logs, si vedem LogStreams dam click pe cel care este acolo, dam pe sagetuta sa deschidem logurile si vedem unul cu testul nostru Hello CloudWatch si cateva eventuri legate de executia asta: cnad a inceput cand s a sfarsit
+	-acum vrem sa facem acelasi lucru din CLI, copiel codu de la pct 4:
+		{
+		  "message": "Hello from CLI!"
+		}
+	-mergem in aws cloudshell scriem comanda nano payload.json pt a creea un file si a il edita direct
+	-dam copy paste la cod in el si dam save ctrl o si ctrl x
+	-dupa dam run a comanda asta: aws lambda invoke --function-name WriteToCloudWatch --payload fileb://payload.json response.json
+	-la function name am scris eu numele functiei WriteToCloudWatch, fileb indica ca e binary format ceea ce vrem aici
+	-dupa ce dam enter la comanda avem un status code de 200 adica success si zice ca $LATEST a fost executat
+	-venim inapoi la cloudwatch si venim mai sus cu un nivel dand click pe /aws/lambda/writetocouldwatch si o sa vedem ca avem un al doilea stream, dam click pe el
+	-si aici vom vedea dupa ce dam expand din sagetuta ca avem un al doilea event Hello from CLI!
+	-deci am executat functia $LASTEST in doua moduri, folosind un test event din pagina web si din cli folosind comanda aws lambda invoke pt a invoca functia noastra
+	-acuma vom vedea cum dam trigger la functie folosind un event notification din amazon s3: deci o sa uploadam file uri intr un s3 bucket si cand vom face asta un event notification din s3 o sa anunte lambda ca se intampla ceva si lambda va preluea numele file ului si metadata ascoiata si o va pune intr un log in cloudwatch 
+	-dam copy la tot codu asta:
+		import json
+		import logging
+		import boto3
+
+		# Initialize logging
+		logger = logging.getLogger()
+		logger.setLevel(logging.INFO)
+
+		def lambda_handler(event, context):
+			# Log the raw event
+			logger.info("Event: " + json.dumps(event))
+			
+			# Process each record within the event
+			for record in event['Records']:
+				# Extract the bucket name and file key from the event
+				bucket_name = record['s3']['bucket']['name']
+				file_key = record['s3']['object']['key']
+				
+				# Log the bucket name and file key to CloudWatch
+				logger.info(f"New file uploaded: {file_key} in bucket {bucket_name}")
+			
+			return {
+				'statusCode': 200,
+				'body': json.dumps('Processed S3 upload event successfully!')
+			}
+	-mergem in lamnda la functions writetocloudwatch si la code, stergem tot codu si ii dam paste la al nostru si dam deploy
+	-acum vom avea nevoie de permisioni la amzon s3, mergem la configuration permissions si dam click pe role name si la permission policies avem doar acces la cloudwatch logs
+	-de sus dam add permissions si attach policy si cautam s3 si bifam AmazonS3ReadOnlyAccess si dam add permissions, deci acuma functia are permisiunea sa citeasca din cloudwatch logs
+	-avem codu insalat, acum dam add trigger si la source alegem S3, acum creeam un bucket nou cu numele myeventnotificationtest-j81lu21gs7ht2 si dam create bucket 
+	-acum ne intoarem la tiggers si la bucket dam refresh si o alegem pe cea tocmai creeata si bifam i aknowledge si dam add
+	-acum avem triggerul , daca mergem la bucket si dam pe a noastra si mergem la properties si dam scroll jos o sa vedem ca un event notification e creat, il putem creea si de aici
+	-acum daca dam upload la file uri o sa se execute automat codul prin tirgger si vom vedea un event in cloudwatch logs care include numele file ului pe care l am uploadat
+	-merg la bucket si dau upload, add file si alegem o poza de ex pinapple si dam upload si dam close la unde ne baga
+	-mai facem asta odata cu alta poza de ex papaya 
+	-mergem in clodwatch logs si mergem un nivel mai sus /aws/lambda/writetocouldwatch si vedem ca a creeat un al treilea log stream si dam pe el
+	-daca dam expand la log vom vedea ca e multa medatada asociata cu file ul si cu event care contine multe detalii gen source , key ul care e filename operatia de API put 
+	-sub acesta vom vedea ca si codul nostru va da print explicit la numele functiei, mai jos vom vedea alta intrare similara cu celalalt filename
+	-acum nu mai dam doar trigger manual din consola sau cli ci dam automat tigger printr-un event notification
+	-putem sterge functia si bucket ul , dar nu vom plati pt lambda functions cand nu sunt folosite si nu vom depasi free tier cu cateva teste cum am facut
+	
+Serverless Application 
+	
+	-avem un s3 static website prin care putem sa submit orders(e un site e-commerce), acest order va fi forwarded trough a rest api care merge pe Amazon API gateway
+	-api ul va da proxy la request printr o functie lambda , adica ii da doar forward fara sa il modifica in vreun fel 
+	-lambda va prelua infomartia order ului care a fost submitted si il va pune intr un SQS Queue 
+	-si acuma alta labda function(proccessing function) va procesa mesajul si il va adauga ca si intrare intr un tabel dynamo db(deci order infomation va ajunge in baza de date dynamo db)
+	-avantajul folosirii unui SQS Queue este ca in cazul in care dureaza mai mult procesarea orderului acesta va putea astepta in queue pt ca functia lambda sa il preia la un mom dat si deci nu se va bloca flowul applciatiei
+	-neavand partea de api frontend deocamdata, vom da submit la un request prin cli si lambda console, deci vom avea un mesaj adaugat in tabel 
+	-intram in folderul serverless-app si avem un file .md cu instructiuni 
+	-mergem la aws lambda si dam Create a function cu numele SubmitOrderFunction si la runtime alegem python 3.9 si dam Create function
+	-acum mergem sa luam codul din SubmitOrderFunction.py dam copy si paste la tab ul Code din functia noastra lambda, observam ca pe linia 5 trebuie sa punem queue url-ul nostru dupa ce il facem
+	-codul acesta de python este o functie(def) care va primi informatia orderului intr un format specific(json) dupa care va pune informatia intr un queue 
+	-mergem la configurations -> permissions si dam pe link ul de la Role name pe care ni-l va deschide in IAM console
+	-aici dam pe Add permissions -> Attach policies , cautam sqs si bifam SQSFullAccess si dam pe add permissions 
+	-cautam in search bar simple queue service, dam Create queue ii punem numele 'ProductOrdersQueue' lasam totu asa cum e si dam Create queue 
+	-acum ne va duce in queue ul nostru unde la details vom vedea queue url care ne trebe noua, ii dam copy si mergem la lambda function la code si ii dam paste pe linia 5 la queue_url = '-paste-' si ii dam deploy
+	-acum vom testa ca mesajul nostru ajunge in queue prin functia lambda facuta mai sus
+	-dam copy la json pt a face un Test:
+		{
+		  "body": "{\"productName\":\"Test Product\",\"quantity\":3}"
+		}
+	-mergem in lambda si la tab ul Test selectam Create new event, cu numele testorder si dam paste la json ul nostru peste ce e acolo by default si dam Save si Test
+	-apare cu verde ca a facut ce trebuia si mesajul order submitted to queue succesfully 
+	-acum mergem la queue si dam pe Send and recieve messages si aici dam Poll for messages si vedem ca a gasit un mesaj direct 
+	-dam click pe mesaj si vedem body ul nostru pe care l am transmis si pe care a doua lambda il va prelua in formatul acesta si il va baga in tabelul dynamo db:
+		{
+			"productName":"Test Product","quantity":3
+		}
+	-acu mergem inapoi la lambda sa creeam a doua functie, mergem un nivel mai sus la functions si dam create function, ii punem numele ProcessOrderFunction si alegem python 3.9 si dam Create
+	-mergem in ProcessOrderFunction.py si luam codul si il punem in tab ul Code in lambda noastra
+	-mergem la Configurations Permissions dam pe Role name Add permissions, Attach permissions si cautam SQS alegem FullAccess si DynamoDBFullAccess si dam Add Permissions
+	-dam search la DynamoDB si dam Create table si la table name punem ProductOrders si la Partition key punem orderId si dam Create table
+	-ii dam iar copy la Name si mergem la lambda noua (ProcessOrderFunction) si la code la table_name punem intre '' numele tabelului nostru ProductOrders si dam deploy
+	-acum trebe sa facem integrarea Queue ului cu functia lambda sa-i dea trigger acesteia 
+	-mergem in SQS si dam un nivel mai sus pe ProductOrdersQueue, mergem pe tabul Lambda triggers si dam Configure lambda function trigger 
+	-vom alege din dropdown functia lambda ProcessOrderFunction si dam Save, astfel avem integrarea ca atunci cand un mesaj intra in queue automat va da trigger la functia de procesare care va procesa automat mesajul din queue(aceasta trimite automat notificare functiei lambda)
+	-mergem la dynamo db dam pe tabelul ProductOrders, selectam PRoductOrders in stanga si vedem ca test product ul nostru a fost adaugat in tabel 
+	-putem de asemenea testa folosind invoke function command din cloudshell cli pe care il si deschidem si dam comanda: nano input.json si dam copy paste la request body ul urmator:
+		{
+		  "body": "{\"productName\":\"Test Product 2\",\"quantity\":2}"
+		}
+	-dupa care dam run la comanda asta, dupa ce punem dupa function name numele primei lambda creeate de noi in loc de <fujnction_name>: 
+		aws lambda invoke --function-name SubmitOrderFunction --payload fileb://input.json output.json
+	-prin asta vom invoca funtia cu payload ul creeat anterior input.json (care e in foma binara) si in output vom pune success response ul 200 ok
+	-vedem si in cli ca dupa ce dam run la comanda vom vedea ca primim un status 200 ok ceea ce e bine
+	-mergem in dynamo db table si dam refresh la items returned din tabelul nostru si vom vedea ca avem si pe cel de al doilea produs adaugat in tabelul nostru
+	
+	-facem un API: cautam amazon api gateway si dam scroll pana gasim REST api(nu cel private) si dam build
+	-lasam New API dam numele ProductOrdersAPI si lasam Regional si dam Create API
+	-prima oara dam Create reosurce pe stanga si la resource name scriem orders si bifam CORS si dam Create resource
+	-acum, cu /orders selectat de sub resourcecs si dam Create method in dreapta si alegem la method type POST(ca dam post la un request, uploading information)
+	-bifam Lambda proxy integration si dupa alegem la lambda functions SubmitOrderFunction si dam Create method
+	-acum din pagina APIs Resources la al nostru selectam in stanga /orders si dam in dreapta pe Enable CORS, bifam toate optiunile(deoarece requestul vine de la alt website) si dam Save
+	-acum din pagina cu resources dam Deploy API sus dreapta, la Stage alegem New Stage si la Stage name scriem prod si dam Deploy
+	-acum o sa avem un invoke url ii dam copy si mergem in index.html la linia 32 si ii dam paste in loc de your-api-endpoint si scriem si /orders dupa prod la sfarsit si ii dam SAVE
+		const response = await fetch('https://1yb8q1fst8.execute-api.eu-north-1.amazonaws.com/prod/orders', {
+	-acum creeam un static website in s3 dam create bucket cu numele myapistaticwebsite-8uj4kp2ud, ii debifam block all public access si bifam i aknowledge si dam Create
+	-din lista de buckets o alegem pe a noastra cu myapistaticwebsite mergem la tabu Properties dam scroll pana jos la static website hosting si dam edit
+	-bifam enable la index document scriem index.html si dam Save changes 
+	-in bucket ul nostru mergem la permissions la bucket policy dam edit si dam paste la jsonu de jos
+		{
+			"Version": "2012-10-17",
+			"Statement": [
+				{
+					"Sid": "PublicReadGetObject",
+					"Effect": "Allow",
+					"Principal": "*",
+					"Action": "s3:GetObject",
+					"Resource": "<YOUR-BUCKET-ARN>/*"
+				}
+			]
+		}
+	-dam copy paste la bucket ARN deasupra text inputului la resource in loc de <YOUR-BUCKET-ARN> si dam Save changes
+	-acum venim la tabul Objects si dam upload la index.html la add files si dam upload
+	-dam close la unde ne duce dupa ce dam upload si mergem la tabu properties dam scroll la Static website hosting si dam click pe static website endpoint 
+	-ne va duce pe un site si la producct name scriem de ex IPhone si quantity 1 si dam Submit, ar trebui sa ne apara un pop up cu ORder submitted succesfully 
+	-acum daca mergem la dynamo db table la Explore items la ProductOrders cu product orders selectat si la Items returned dam refresh sa dea scan la tabel si o sa vedem intrarea cu iphoneu nostru 
+	-daca nu merge treaba bine, verificam iara cum am modificat linia in index html sau mergem la api gateway la apis la al nostru si dam iar Enable CORS si bifam toate si dam save si dam iar Deploy la API la Stage alegem prod si dam Deploy 
+	-putem de asemenea sa folosim consola de developer tools in site u unde dam submit la order
+	
+	
+
+	
+	
+	
+	
+	
+	
+
+
+
+
+

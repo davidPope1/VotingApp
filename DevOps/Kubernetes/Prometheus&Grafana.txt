@@ -1,0 +1,679 @@
+Prometheus and Grafana setup in Minikube
+
+-mai intai trei sa avem minikube setat cu kubectl si helm instalat
+
+$ curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+$ sudo apt-get install apt-transport-https --yes
+$ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+$ sudo apt-get update
+$ sudo apt-get install helm
+
+$ helm version
+
+-adaugam repository la configu helm 
+
+$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+-putem sa ne facem un namespace numit monitoring 
+
+$ kubectl create namespace monitoring
+
+-apoi cu package manegeru helm instalam prometheus 
+
+$ helm install prometheus prometheus-community/prometheus -n monitoring 
+
+-daca cv merge rau putem sterge prometheus si grafana asa: $ helm uninstall grafana -n monitoring si $ helm uninstall prometheus -n monitoring
+
+-acuma dam expose la serviceu prometheus-server adaugand un serviciu de nodePort(el deja are unu de cluster ip)
+
+$ kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-np -n monitoring 
+
+-dam $ kubectl get all -n monitoring    sa vedem ca is creeate service urile si cel nodeport de expose 
+
+-acuma putem sa dam urm comanda sa ne genereze un link la prometheus UI pe browser dar trei sa i facem ssh 
+
+$ minikube service prometheus-server-np 	- e can degeaba fara ssh ne da asta http://192.168.49.2:30141/ pe care il deduceam si singuri, cautam serviceu nodeport pt prometheus server np si vedeam acolo portu si ipu e cel a lu minikube 
+
+- asa ca facem ssh:
+
+$ ssh -L 9090:192.168.49.2:30995 david@172.17.34.243
+
+-intram pe localhost:9090 si dam la Status -> Target health si vedem ca face scrape la targeturi ok 
+
+-acuma sa instalam grafana, dam add la repo-u helm pt grafana 
+
+$ helm repo add grafana https://grafana.github.io/helm-charts
+
+$ helm install grafana grafana/grafana -n monitoring 
+
+-ii dam expose la service-ul pt grafana ui
+
+$ kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-np -n monitoring
+
+-dam kubetl gel all sa ii vedem portu la serviceu de nodePort grafana-np: 32542
+-facem si ssh la acest service sa il accesam dupa windows 
+
+$ ssh -L 3000:192.168.49.2:31328 david@172.17.34.243
+
+$ ssh -L 9093:192.168.49.2:30244 david@172.17.34.243
+
+-intram pe localhost:3000 si avem useru admin si parola trei sa o gasim cu comanda:
+
+$ kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+-o sa ne dea cv de genu PGAYO58MjPqGuj4DSszTglaMUQvWEthLuBUGIy2M
+
+-mergem la Connections -> Data sources si dam add data source si alegem Prometheus si o sa ne puna sa ii dam un URL 
+-URL-ul pt instanta prometheus este numele service-ului http://prometheus-server:80 sau http://192.168.49.2:30141
+-de aici luam urlu: dam $ kubectl get all -n monitoring: service/prometheus-server   ClusterIP   10.103.101.220   <none>   80/TCP
+-dam save and test si vedem ca merge, acuma ii dam create new dashboard si o sa dam import la mai multe dupa ip:
+
+-k8s: 1860, 18283, 14623, 15757, 12202, 15661, 315, 8171, 
+
+-docker: 3119, 315, 3131, 6417, 8171
+
+
+Alert Monitoring in Kubernetes 
+
+-in loc sa dam App password de la google hardcodat asa direct in cod mai bine facem un secret cu kubernetes asa:
+
+$ kubectl create secret generic alertmanager-gmail-secret --from-literal=smtp-password='zlrs hbks bmok pbzb' -n monitoring
+
+-acuma trei sa updatam values.yaml pt prometheus. Adica putem configura Alertmanager din Helm sa foloseasca acest secret pt App password Gmail 
+-cu comanda urm downloadam current helm chart values:
+
+$ helm show values prometheus-community/kube-prometheus-stack > default-values.yaml
+
+-dam ls si vedem ca a aparut default-values.yaml deschidem values.yaml cu sudo nano si modificam Alertmanager configuration astfel:
+
+default-values.yaml 
+
+...
+
+ ## Alertmanager configuration directives
+  ## ref: https://prometheus.io/docs/alerting/configuration/#configuration-file
+  ##      https://prometheus.io/webtools/alerting/routing-tree-editor/
+  ##
+  config:
+    global:
+      resolve_timeout: 5m
+    inhibit_rules:
+      - source_matchers:
+          - 'severity = critical'
+        target_matchers:
+          - 'severity =~ warning|info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'severity = warning'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'alertname = InfoInhibitor'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+      - target_matchers:
+          - 'alertname = InfoInhibitor'
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 3h
+      receiver: gmail-notifications
+      routes:
+      - receiver: 'null'
+        matchers:
+          - alertname = "Watchdog"
+    receivers:
+      - name: 'gmail-notifications'
+        email_configs:
+          - to: "davidpopescu85@gmail.com"
+            from: "davidpopescu85@gmail.com"
+            smarthost: "smtp.gmail.com:587"
+            auth_username: "davidpopescu85@gmail.com"
+            auth_password_file: "/etc/alertmanager/secrets/smtp-password"
+            require_tls: true
+
+  alertmanagerConfig:
+    secrets:
+      - name: gmail-smtp-password
+        key: smtp-password
+    templates:
+    - '/etc/alertmanager/config/*.tmpl'
+  
+  ...
+
+
+-dupa ce bagam asta acolo upgradam helmu sa se aplice configuratia updatata cu comenzile:
+
+$ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack -f values.yaml --namespace=monitoring
+
+sau 
+
+$ helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring -f default-values.yaml --namespace=monitoring
+
+$ kubectl delete pod -l app.kubernetes.io/name=alertmanager -n monitoring
+
+-sa verificam log-urile sa ne asiguram ca merge:
+
+$ kubectl logs -l app.kubernetes.io/name=alertmanager -n monitoring
+
+-nu merge si facem chestii:
+
+$ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack --namespace=monitoring --create-namespace --set prometheus.prometheusSpec.persistentVolume.enabled=false
+$ helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml
+$ helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml
+
+-acuma putem da si comanda asta sa accesam UI-ul pt alertmanager :
+
+$ minikube service prometheus-alertmanager-np --url 
+
+-in fine acuma facem alerting-rules.yaml cu rule-urile din deploymentu cu docker compose, dar cu un antent de genu pt un ConfigMap k8s:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alerting-rules
+  namespace: monitoring
+data:
+  alerting-rules.yaml: |
+    groups:
+      - name: memory_alerts
+        rules:
+          - alert: HighMemoryUsage
+            expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.8
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Memory usage is above 80% in container"
+	....		  
+			  
+-acuma, sa aplicam aceste rules:
+
+$ kubectl apply -f alerting-rules.yaml -n monitoring
+
+
+
+Alerting Rules in Prometheus with Helm(2)
+
+-vedem ca merge da nu ie asa de combinatie
+-o luam de la capat cu namespaceu gol si in folderu prometheus din k8s-specs facem un file prometheus.yaml:
+
+prometheus.yaml
+
+serverFiles:
+  alerting_rules.yml:
+      groups:
+      - name: NodeDown
+        rules:
+        # Alert for any instance that is unreachable for >5 minutes.
+        - alert: InstanceDown
+          expr: up{job="kubernetes-nodes"} == 0
+          for: 2m
+          labels:
+            severity: page
+          annotations:
+            host: "{{ $labels.kubernetes_io_hostname }}"
+            summary: "Instance down"
+            description: "Node {{ $labels.kubernetes_io_hostname  }}has been down for more than 5 minutes."
+			
+      - name: low_memory_alert
+        rules:
+        - alert: LowMemory
+          expr: (node_memory_MemAvailable_bytes /  node_memory_MemTotal_bytes) * 100 < 85
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            host: "{{ $labels.kubernetes_node  }}"
+            summary: "{{ $labels.kubernetes_node }} Host is low on memory.  Only {{ $value }}% left"
+            description: "{{ $labels.kubernetes_node }}  node is low on memory.  Only {{ $value }}% left"
+			
+        - alert: KubePersistentVolumeErrors
+          expr: kube_persistentvolume_status_phase{job="kubernetes-service-endpoints",phase=~"Failed|Pending"} > 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            description: The persistent volume {{ $labels.persistentvolume }} has status {{ $labels.phase }}.
+            summary: PersistentVolume is having issues with provisioning.
+			
+        - alert: KubePodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total{job="kubernetes-service-endpoints",namespace=~".*"}[5m]) * 60 * 5 > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.
+            summary: Pod is crash looping.
+			
+        - alert: KubePodNotReady
+          expr: sum by(namespace, pod) (max by(namespace, pod) (kube_pod_status_phase{job="kubernetes-service-endpoints",namespace=~".*",phase=~"Pending|Unknown"}) * on(namespace, pod)    group_left(owner_kind) topk by(namespace, pod) (1, max by(namespace, pod, owner_kind) (kube_pod_owner{owner_kind!="Job"}))) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            description: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 5 minutes.
+            summary: Pod has been in a non-ready state for more than 2 minutes.
+			
+	  - name: memory_alerts
+	    rules:
+	    - alert: HighMemoryUsage
+		  expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.8
+		  for: 1m
+		  labels:
+		    severity: critical
+		  annotations:
+		    summary: "Memory usage is above 80% in container"
+
+	  - name: cpu_alerts
+	    rules:
+	    - alert: HighCPULoad
+		  expr: rate(container_cpu_user_seconds_total[1m]) > 0.9
+		  for: 1m
+		  labels:
+		    severity: critical
+		  annotations:
+		    summary: "CPU usage is above 90% in container"
+
+	  - name: disk_alerts
+	    rules:
+	    - alert: HighDiskUsage
+	   	  expr: (container_fs_usage_bytes / container_fs_limit_bytes) > 0.8
+		  for: 1m
+		  labels:
+		    severity: critical
+		  annotations:
+		    summary: "Disk usage is above 80% in container"
+
+	  - name: container_alerts
+	    rules:
+	    - alert: ContainerDown
+		  expr: up{job="docker"} == 0
+		  for: 5m
+		  labels:
+		    severity: critical
+		  annotations:
+		    summary: "Container is down"
+
+	  - name: prometheus_alerts
+	    rules:
+	    - alert: ScrapeFailure
+		  expr: scrape_samples_post_metric_relabeling_failed_total > 0
+		  for: 5m
+		  labels:
+		    severity: critical
+		  annotations:
+		    summary: "Prometheus scrape failure"
+
+	  - name: http_request_alerts
+	    rules:
+	    - alert: HighHTTPRequestLatency
+		  expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+		  for: 1m
+		  labels:
+		    severity: critical
+		  annotations:
+		    summary: "95th percentile of HTTP request latency is above 2 seconds"
+
+	  - name: disk_operations
+	    rules:
+	    - alert: HighDiskReads
+		  expr: rate(node_disk_read_bytes_total[5m]) > 1000000
+		  for: 1m
+		  labels:
+		    severity: warning
+		  annotations:
+		    summary: "High disk read rate"
+	    - alert: HighDiskWrites
+		  expr: rate(node_disk_written_bytes_total[5m]) > 1000000
+		  for: 1m
+		  labels:
+		    severity: warning
+		  annotations:
+		    summary: "High disk write rate"
+
+      - name: node_alerts
+	    rules:
+	    - alert: HighNodeCPULoad
+		  expr: avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance) < 0.1
+		  for: 1m
+		  labels:
+		    severity: critical
+		  annotations:
+		    summary: "Node CPU load is above 90%"
+			
+			
+-ok avem acest file pe baza caruia o sa instalam prometheus in namespaceu monitoring cu comanda:
+
+$ helm install prometheus prometheus-community/prometheus -f prometheus.yaml -n monitoring
+
+-o sa ne dea eroare ca e deja instalat asa ca trei sa l instalam mai intai asa:
+
+$ helm uninstall prometheus -n monitoring
+
+-si dupa care rulam comanda de install 
+-acuma, putem sa i dam expose la serviceu de prometheus prometheus-server asa:
+
+$ kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-np -n monitoring 
+
+-apoi trei ii dam ssh cu comanda pe care o avem si mai sus da o punem iar sa fie treaba treaba:
+
+$ ssh -L 9090:192.168.49.2:31401 david@172.17.34.243
+
+-acuma ii dam expose si la service-ul prometheus-alertmanager dupa care si ssh:
+
+$ kubectl expose service prometheus-alertmanager --type=NodePort --target-port=9093 --name=alertmanager-np -n monitoring
+
+$ ssh -L 9093:192.168.49.2:30396 david@172.17.34.243
+
+-acuma avem de configurat alerrt manager pt notificari prin email 
+-ca sa luam config mapu lu alertmanager, dam comanda:
+
+$ kubectl get configmaps -n monitoring
+
+-apoi ca sa i dam si edit dam comanda asta:
+
+$ kubectl edit configmap prometheus-alertmanager -n monitoring 
+
+-aici adaugam continutu urm, dupa linia alertmanager.yml: | 
+-adica va trebui sa arate asa, bineinteles ca completam cu mailu si app passowrdu nostru: 
+
+
+apiVersion: v1 
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 1m
+      # slack_api_url: ''
+
+    receivers:
+      - name: 'gmail-notifications'
+        email_configs:
+        - to: 'davidpopescu85@gmail.com' 
+          from: 'davidpopescu85@gmail.com' # Update your from mail id here
+          smarthost: 'smtp.gmail.com:587'
+          auth_username: 'davidpopescu85@gmail.com' # Update your from mail id here
+          auth_identity: 'davidpopescu85@gmail.com' # Update your from mail id here
+          auth_password: 'zlrs hbks bmok pbzb' # Update your app-password here
+          send_resolved: true
+          headers:
+            subject: " Prometheus -  Alert  "
+          text: "{{ range .Alerts }} Hi, \n{{ .Annotations.summary }}  \n {{ .Annotations.description }} {{end}} "
+          # slack_configs:
+          #  - channel: '@you'
+          #    send_resolved: true
+
+    route:
+      group_wait: 10s
+      group_interval: 2m
+      receiver: 'gmail-notifications'
+      repeat_interval: 2m
+
+	... // aici trei sa stergem unpic din ce era si inainte, adica de la linila global: {} pana la linia -etc/alertmanager/*tmpl inclusiv , efectiv dam doua entere sub alert manager.yml: | si dam paste la ce vedem mai sus incepand cu global:
+	-putem sa incercam si cu secretu vietii sa nu bagam parola direct in config 
+	
+	-o sa ranana de la king: ConfigMap in jos 
+	-dam :w si dupa :qa dupa ce terminam de editat
+	
+-acuma, ca sa dam refresh la alert manager access, trei sa stergem podu aferent:
+
+$ kubectl delete pod prometheus-alertmanager-0 -n monitoring 
+
+-pt ca Alert Manager este deployed ca un Stateful Set, podu ar trebui sa fie recreat automat
+
+-acuma trei sa reinstalam grafana cred ca sa fie creeate serviciile si asa, ii dam expose, aflam parola, ii facem ssh si ne putem conecta:
+
+$ helm uninstall grafana -n monitoring
+
+$ helm install grafana grafana/grafana -n monitoring 
+	
+$ kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-np -n monitoring 
+
+$ kubectl get secret -n monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+$ ssh -L 3000:192.168.49.2:31110 david@172.17.34.243
+
+-bagam parola de mai sus si mergem la Add Data Source si punem la url: htpp://prometheus-server:80
+
+-dam import la dashboards:  6417, 3119, 8919, 7249, 11074
+
+-k8s: 1860, 18283, 14623, 15757, 12202, 15661, 315, 8171, 11074
+
+-docker: 3119, 315, 3131, 6417, 8171, 7249 //8919
+
+!!! VARIANTA ASTA DE MAI SUS MERGE SOTOO
+
+
+
+Prometheus and Grafana setup just for Docker containers
+
+Agaugam definitiile containerelor in docker-compose.yml:
+
+prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+      - ./alert.rules:/etc/prometheus/alert.rules  # Mount the alert rules file
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped 
+    depends_on:
+      - cadvisor
+      - node-exporter
+    networks:
+      - monitoring 
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml  # Path to Alertmanager config
+    ports:
+      - "9093:9093"
+    networks:
+      - monitoring 
+  
+  grafana: 
+    image: grafana/grafana:latest
+    container_name: grafana 
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - monitoring 
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest 
+    container_name: cadvisor 
+    ports: 
+      - "8085:8080"
+    volumes:
+      - /:/rootfs
+      - /var/run:/var/run
+      - /sys:/sys
+      - /var/lib/docker/:/var/lib/docker
+    restart: always
+    networks:
+      - monitoring 
+
+  node-exporter:
+    image: bitnami/node-exporter:latest
+    container_name: node-exporter 
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro 
+      - /:/rootfs:ro 
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring 
+	  
+-Creeam fileu prometheus.yml pt configurarea Prometheus sa foloseascsa aceste doua target uri cadvisor si node exporter sa ia date despre containere 
+-avem efectiv configuratia asta care mapeaza numele job-ului la portu expus din containeru aferent job-ului 
+-avem si partea de alerte pe mail cu serviciul aferent tot asa mapat la portu expus din container 
+
+
+prometheus.yml 
+
+global:
+  scrape_interval: 10s 
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+  
+  - job_name: "node-explorer" 
+    static_configs: 
+      - targets: ["node-exporter:9100"]
+  
+  - job_name: "cadvisor" 
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+rule_files:
+  - "alert.rules"  # Add the path to the file containing your alerting rules
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'alertmanager:9093'   # Point to your Alertmanager service
+	  
+-aici avem si configu pt alertmanager pe care i-l dam ca volum in container 
+
+alertmanager.yml 
+
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+  receiver: 'email-notifications'
+
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'davidpopescu85@gmail.com'  # Replace with your Gmail address
+        from: 'davidpopescu85@gmail.com'  # Use the same Gmail address here
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'davidpopescu85@gmail.com'  # Your Gmail address
+        auth_password: 'zlrs hbks bmok pbzb'  # App password zlrs hbks bmok pbzb pe care o creeam din gmail settings app password sau cv dupa ce avem 2setp auth on 
+        require_tls: true
+
+-aici avem si definirea alertelor pe care o apelam in prometheus.yml la rule_files:
+
+alert.rules 
+
+groups:
+- name: memory_alerts
+  rules:
+  - alert: HighMemoryUsage
+    expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.8
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Memory usage is above 80% in container"
+
+- name: cpu_alerts
+  rules:
+  - alert: HighCPULoad
+    expr: rate(container_cpu_user_seconds_total[1m]) > 0.9
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "CPU usage is above 90% in container"
+
+- name: disk_alerts
+  rules:
+  - alert: HighDiskUsage
+    expr: (container_fs_usage_bytes / container_fs_limit_bytes) > 0.8
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Disk usage is above 80% in container"
+
+- name: container_alerts
+  rules:
+  - alert: ContainerDown
+    expr: up{job="docker"} == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Container is down"
+
+- name: prometheus_alerts
+  rules:
+  - alert: ScrapeFailure
+    expr: scrape_samples_post_metric_relabeling_failed_total > 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Prometheus scrape failure"
+
+- name: http_request_alerts
+  rules:
+  - alert: HighHTTPRequestLatency
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "95th percentile of HTTP request latency is above 2 seconds"
+
+- name: disk_operations
+  rules:
+  - alert: HighDiskReads
+    expr: rate(node_disk_read_bytes_total[5m]) > 1000000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High disk read rate"
+  - alert: HighDiskWrites
+    expr: rate(node_disk_written_bytes_total[5m]) > 1000000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High disk write rate"
+
+- name: node_alerts
+  rules:
+  - alert: HighNodeCPULoad
+    expr: avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance) < 0.1
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Node CPU load is above 90%"

@@ -1,0 +1,2782 @@
+Terraform
+
+	-exemplu de limbaj HCL
+
+	resource "local_file" "pet" {
+	  filename = "/root/pets.txt"
+	  content = "We love pets!"
+	}
+
+	-aceasta va creea un file pets.txt in path-ul din filename cu continutul din argumentul content
+	-local_file e tipul resursei si providerul haschi corp local oficial pe care il vedem cand scriem terraform init
+	-pet e numele resursei, cum local_file e tipul acesteia
+
+	resource "aws_instance" "webserver" {
+	  ami = "ami-0c2f25c1f66a1ff4d"
+	  instance_type = "t3.micro"
+	}
+
+	-aceasta va da launch la o instanta in AWS de linux de tipul t3.micro cu numele webserver
+	-observam ca providerul este unul oficial AWS
+
+	resource "aws_s3_bucket" "data" {
+	  ami = "webserver-bucket-org-2207"
+	  acl = "private"
+	}
+
+	-aceasta va creea un s3 bucket pe aws privata
+
+	-cu comanda terraform init  vom instala provider pulgins declarate in tipul resursei
+	-de ex haschicorp/local v1.4.0 pt resource "local_file"
+
+	-comanda terraform plan ne va zice care sunt schimbarile pe care le putem face daca mergem mai departe cu terraform apply
+	-comanda terraform show ne va arata toate detaliile fisierului sau fisierelor creeate de ex permisiunile contentu locatia si denumirea file ului si id ul
+
+	-daca vrem sa modificam configuratia terraform pt a modifica si fisierul ulterior putem sa o facem
+
+	resource "local_file" "pet" {
+	  filename = "/root/pets.txt"
+	  content = "We love pets!"
+	  file_permission = "0700"
+	}
+
+	-modificam permisiunea(default de 0777) si dam terraform plan, vom observa a ni se descrie modificarea facuta, el va sterge fisierul creeat deja si va face altu nou si daca dam si terraform apply o sa o si faca
+	-comanda terraform destroy va sterge toate fisierele descrise in configurarile .tf existente in folderul in care suntem in terminal
+	-resource "local_sensitive_file" asta va face ca contentul sa nu se vada pe ecran e o resursa de alt tip care va ascunde contentul
+
+	-alt provider oficial haschicorp este random_pet 
+
+	resource "random_pet" "my-pet" {
+	  prefix = "Mrs"
+	  separator = "."
+	  length = "1"
+	}
+
+	-de ex aceasta congiguratie va creea un nume de pet care incepe cu Mrs urmat de . si doar un prenume(length = "1")
+	-id ul va fi ce returneaza aceasta configuratie, de ex Mrs.hen
+
+	-putem folossi si variabile pt a da valori argumentelor configuratiilor, de ex:
+
+	main.tf:
+
+	resource "local_file" "pet" {
+	  filename = var.filename
+	  content = var.content
+	}
+
+	resource "random_pet" "my-pet" {
+	  prefix = var.prefix
+	  separator = var.separator
+	  length = var.length
+	}
+
+
+	variables.tf:
+
+	variabile "filename" {
+	  default = "/root/pets.txt"
+	}
+
+	variabile "content" {
+	  default = "We love pets!"
+	}
+
+	variabile "prefix" {
+	  default = "Mrs"
+	}
+
+	variabile "separator" {
+	  default = "."
+	}
+
+	variabile "length" {
+	  default = "1"
+	}
+
+	-daca modificam continutul variabilelor , de ex: 
+
+	variable "content" {
+	  default = "My favorite pet is Mrs. Whiskers"
+	}
+
+	variable "length" {
+	  default = "2"
+	}
+
+	-daca dam terraform apply, vedem ca cele doua resurse vor fi sterse si vor fi adaugate unele noi modificate precum argumentele editate
+	-putem sa declaram configuratii terraform si pt servicii aws:
+	main.tf:
+
+	resource "aws_instance" "webserver" {
+	  ami = var.ami
+	  instance_type = var.instance_type
+	}
+
+	variabiles.tf:
+
+	variable "ami" {
+	  default = "ami-0edab43b6fa892279"
+	}
+
+	variable "instance_type" {
+	  default = "t2.micro"
+	}
+
+	-declararea variabilelor poate contine si alte argumente de genul type sau description:
+
+	variable "filename" {
+	  default = "/root/pets.txt"
+	  type = string
+	  description = "the path of local file"
+	}
+
+Tabel cu tipuri de variabile:
+
+	string 		"/root/pets.txt"
+	number 				1
+	bool 			true/false
+	any 			Default Value
+	list 			["cat", "dog"]
+
+	map				pet1 = cat
+					pet2 = dog
+	object 			Complex Data 
+					Structure
+	tuple 			Complex Data 
+					Structure
+
+	Exemple:
+	List
+	variabiles.tf
+
+	variable "prefix" {
+	  default = ["Mr", "Mrs", "Sir"]
+	  type = list //0     1     2
+	}
+
+	main.tf
+
+	resource "random_pet" "my-pet" {
+	  prefix = var.prefix[0]
+	}
+
+Map
+	variabiles.tf
+
+	variable "file-content" {
+	  type = map
+	  default = {
+		  "statement1" = "We love pets!"
+		  "statement2" = "We love animals!"
+	  }
+	}
+
+	main.tf
+	resource "local_file" "my-pet" {
+	  filename = "/root/pers.txt"
+	  content = var.file-content["statement2"]
+	}
+
+List of a Type
+
+	variabiles.tf
+
+	variable "prefix" {
+	  default = ["Mr", "Mrs", "Sir"]
+	  type = list(string)
+	}
+
+	variable "prefix" {
+	  default = ["1", "2", "3"]
+	  type = list(number)
+	}
+
+Map of a Type
+	variabiles.tf
+
+	variable "cats" {
+	  default = {
+		  "color" = "brown"
+		  "name" = "bella"
+	  }
+	  type = map(string)
+	}
+
+	variable "pet_count" {
+	  default = {
+		  "dogs" = "3"
+		  "cats" = "1"
+		  "goldfish" = "2"
+	  }
+	  type = map(number)
+	}
+
+Set - o lista care nu poate avea valori duplicate
+
+	variable "fruit" {
+	  default = ["apple", "bannana", "bannana"]	//error		default = ["apple", "bannana"]	//corect
+	  type = set(string)
+	}
+
+Objects
+
+	variable "bella" {
+	  type = object ({
+		  name = string
+		  color = string
+		  age = number
+		  food = list(string)
+		  favorite_pet = bool
+	  })
+	  
+	  default = {
+		  name = "bella"
+		  color = "brown"
+		  age = 7
+		  food = ["fish", "chicken", "turkey"]
+		  favorite_pet = true/false
+	  }
+	}
+
+Tuples
+
+	variabile kitty {
+	  type    = tuple([string, number, bool])
+	  default = ["cat", 7, true]	//ok    //   default = ["cat", 7, true, "dog"]  -error
+	}
+
+
+Using Variabels in Terraform
+
+	-putem lasa variabilele si fara valoare default
+
+	variabile "length" {
+
+	}
+
+	-cand dam terraform apply o sa ne apara in terminal Enter a value: pt variabila noastra fara valoare default
+
+	var.content
+		Enter a value: 2
+		
+	-putem da valori variabilelor si direct din comanda terraform apply folosind niste flaguri/parametrii astfel:
+
+	terraform apply -var "filename=/root/pets.txt" -var "content=We love Pets!" -var "prefix=Mrs" -var "separator=." -var "length=2" 
+
+	-putem da valori variabilelor si inainte de comanda terraform apply:
+
+
+	export TF_VAR_filename="/root/pets.txt"
+	export TF_VAR_content="We love pets!"
+	export TF_VAR_prefix="Mrs"
+	export TF_VAR_separator="."
+	export TF_VAR_length="2"
+	terraform apply
+
+	-putem da valori variabilelor si cu Variable Definition Files
+
+	terraform.tfvars
+
+	filename="/root/pets.txt"
+	content="We love pets!"
+	prefix="Mrs"
+	separator="."
+	length="2"
+
+	$ terraform apply -var-file variables.tfvars
+
+	-dam comanda asta pt a incarca variabilele 
+	-pentru a nu mai specifica si -var-file variables.tfvars , putem folosi nume pt file uri care incarca automat variabilele
+
+	terraform.tfvars sau terraform.tfvars.json
+	*.auto.tfvars    sau *.auto.tfvars.json
+
+
+Prioritatea modurilor de definire a variabilelor
+
+	main.tf
+
+	resource "local_file" "pet" {
+		filename = var.filename
+	}
+
+	variables.tf
+
+	variabile filename {
+		type = string
+	}
+
+	-scriem comanda in terminal:
+
+	$export TF_VAR_filename="/root/cats/txt"
+
+	-terraform.tfvars
+
+	filename = "/root/pets.txt"
+
+	-variable.auto.tfvars
+
+	filename="/root/mypet.txt"
+
+	-comanda
+
+	$terraform apply -var "filename=/root/best-pet.txt"
+
+	-deci facem aceste lucruri in aceasta ordine, variabila va ramane cu valoarea din linia de comanda best-pet.txt
+
+	Order			Option
+	  1		 Environment Variables
+	  2 		  terraform.tfvars
+	  3 		 *.auto.tfvars (alphabetical order)
+	  4 		 -var or –var-file (command-line flags)
+
+	-daca de exemplu facem optiunea 1 si dupa 2, variabila va lua valoarea din optiunea 2, dar daca facem optiunea 2 si dupa 1, variabila va ramane la valoarea din optiunea 1
+
+
+Resource Attribute Reference
+
+
+Implicit Dependency
+
+	main.tf
+
+	resource "local_file" "pet" {
+		filename = var.filename
+		content = "My favorite pet is ${random_pet.my-pet.id}"	//aici o sa avem Mr.Bull in loc de referinta respectiva
+	}
+
+	resource "random_pet" "my-pet" {
+		prefix = var.prefix
+		separator = var.separator
+		length = var.length
+	}
+
+
+Explicit Dependency
+
+	resource "local_file" "pet" {
+		filename = var.filename
+		content = "My favorite pet is Mr.Cat"
+		
+		depends_on = [
+			random_pet.my-pet
+		]
+	}
+
+	resource "random_pet" "my-pet" {
+		prefix = var.prefix
+		separator = var.separator
+		length = var.length
+	}
+
+	-in caz ca dam apply la resurse se va creea mai intai a doua my-pet si dupa pet, deoarece prima depinde de a doua
+	-in caz ca dam destroy la resurse se va sterge mai intai prima si dupa a doua, in ordinea inversa creearii
+
+
+Output Variables
+
+	main.tf
+
+	resource "local_file" "pet" {
+		filename = var.filename
+		content = "My favorite pet is ${random_pet.my-pet.id}"	//aici o sa avem Mr.Bull in loc de referinta respectiva
+	}
+
+	resource "random_pet" "my-pet" {
+		prefix = var.prefix
+		separator = var.separator
+		length = var.length
+	}
+
+	output pet-name {
+	  value = random_pet.my-pet.id
+	  description = "Record the value of pet ID generated by the random_pet resource"
+	}
+
+	$ terraform apply
+	.
+	.
+	Outputs:
+
+	pet-name = Mrs.gibbon
+
+	$ terraform apply pet-name
+	.
+	.
+	Mrs.gibbon
+
+
+Terraform State
+
+	main.tf
+
+	resource "local_file" "pet" {
+		filename = var.filename
+		content  = var.content
+	}
+
+	variables.tf
+
+	variable "filename" {
+		default = "/root/pets.txt"
+	}
+
+	variabile "content" {
+		default = "I love pets!"
+	}
+
+	-cand dam init nu se creeaza niciun statement1
+	-cand dam plan, se incearca sa se dea refresh la un state deja existent, dar cum inca nu s a dat apply, nu exista unul creeat
+	-cand dam apply, se incearca de asemenea sa se dea refresh la un state existent, dar vede ca nu exista niciunul in memorie si merge inainte cu planul de executie
+	-de asemenea, terraform creeaza un id unic pt resursa dupa ce o creeaza
+	-daca rulam iar apply, terraform stie ca deja exista un file cu numele de pets.txt cu acelasi id pe care l am vazut mai devreme asa ca nu mai face nimic
+	-daca ne uitam in folderul cu fisierele de config .tf, vedem ca exista si alt fiesier terraform.tfstate, care a fost creeata ca o consecinta a comenzii apply care a creeat resursa initial 
+	-acest terraform state file nu este creeat pana nu este executata comanda apply macar o data
+	-acest file contine toate detaliile posibile despre fileu nostru content, filename si infrastructura terraform cu care a creeat resursa respectiva
+	-daca facem o modificare in config fileu variables.tf argumentu content(We love pets) si rulam din nou plan sau apply, terraform default da refresh la state din nou si il compara cu configuration file
+	-o sa vada ca valoarea variabilei content acuma difera de valoarea ei din fisierul terraform.tfstate
+	-vede ca valoarea variabilei "in lumea reala" adica acum este We love pets! spre deosebire de cea din terraform.tfstate file
+	-deci acuma terraform stie ca resursa trebuie recreata si cand rulam apply, va modifica variabila in statefile de asemenea cu cea noua we love pets
+	-ca urmare a comenzii apply, vedem ca vechea resursa cu vechiul id au fost sterse si facuta una noua cu un nou id si noua valoare a variabilei content
+	-acelasi lucru il vedem in terraform.tfstate, apare noua valoare a variabilei dar si noul id al resursei, deci acum file ul de configurare si state file ul sunt sincronizate
+	-si deoarece nu au nicio diferenta nu vor fi schimbari de aplicat
+
+Terraform Commands
+
+	main.tf
+	
+	resource "local_file" "pet" {
+	  filename = "/root/pets.txt"
+	  content = "We love pets!"
+	  file_permissions = "0700"
+	}
+
+	-daca dam comanda terraform validate , ne va atentiona ca trb file_permission in loc de file_permissions
+	-comanda verifica doar greselile de sintaxa
+	
+	-$ terraform fmt ne va formata fisierele de configuratie astfel:
+	
+	resource "local_file" "pet" {
+	  filename         = "/root/pets.txt"
+	  content          = "We love pets!"
+	  file_permissions = "0700"
+	}
+	
+	-$ terraform show ne va arata detalii despre fisierele de configuratie:
+	
+	# local_file.pet:
+	resource "local_file" "pet" {
+	content = "We love pets!"
+	directory_permission = "0777"
+	file_permission = "0777"
+	filename = "/root/pets.txt"
+	id = 
+	"cba595b7d9f94ba1107a46f3f731912d95fb3d2c"
+	}
+
+	-$ terraform providers ne va arata providerii care s au folosit la fisierele noastre de configuratie
+	
+	Providers required by configuration:
+	.
+	└── provider[registry.terraform.io/hashicorp/local]
+	
+	Providers required by state:
+	
+	provider[registry.terraform.io/hashicorp/local]
+	
+	-$ terraform providers mirror /root/terraform/new_local_file  comanda asta va downloada providerii care ne trebuie pt configuratia curenta in alt folder de la alt path /root/terraform/new_local_file
+
+	main.tf:
+	
+	resource "local_file" "pet" {
+		filename = "/root/pets.txt"
+		content = "We love pets!"
+		file_permission = "0777"
+	}
+	
+	resource "random_pet" "cat" {
+		length = "2"
+		separator = "-"
+	}
+	
+	output content {
+		value = local_file.pet.content
+		sensitive = false
+		description = "Print the content of the file"
+	}
+	
+	output pet-name {
+		value = random_pet.cat.id
+		sensitive = false
+		description = "Print the name of the pet"
+	}
+
+	-$ terraform output  ne va afisa variabilele de output declarate in main.tf prin referinta la cele doua resurse
+	
+	content = We love pets!
+	pet-name = huge-owl
+
+	$ terraform output pet-name  va afisa continutul variabilei de output specificate
+	
+	pet-name = huge-owl
+
+	-$ terraform refresh  e folosit pt a sincroniza terraform cu fisierele de configurare
+	-de exemplu daca este vreo schimbare manuala facuta in vreun fisier de configurare main.tf facut de terraform, terraform refresh o va vedea si va updata state file ul
+	-aceasta comanda nu va modifica nicio resursa creeata ci doar fisierul terraform.tfstate
+	-cum am vazut mai devreme, terraform refresh e rula automat de comenzile terraform plan si apply
+	-putem sa folosim optiunea -refresh=false pt a nu mai face refresh automat in cele doua comenzi 
+	
+	-$ terraform graph  -e folosita pt a creea o reprezentare vizuala a dependintelor si a configuratiei terraform sau un plan de executie
+	
+LifeCycle Rules
+
+	main.tf:
+	
+	resource "local_file" "pet" {
+		filename = "/root/pets.txt"
+		content = "We love pets!"
+		file_permission = "0777"	// schimbam in file_permission = "0700"
+	}
+
+	-avem configuratia main.tf, daca modificam permisiunile si dam run la terraform apply, aceasta va sterge fisierul vechi pets.txt si dupa va creea altul nou
+	-uneori vom vrea ca fisierul nou sa fie creeat prima data si dupa sa fie sters cel vechi sau vrem ca fisierul existent sa nu fie sters deloc
+	-pt asta vom folosi liecycle rules care intra direct intre {} din blocul resursei pe care vrem sa o schimbam
+	
+	resource "local_file" "pet" {
+		filename = "/root/pets.txt"
+		content = "We love pets!"
+		file_permission = "0777"	 
+		
+		lifecycle {
+			create_before_destroy = true
+		}
+	}
+
+	-in interiorul lifecycle adaugam regula pe care sa o urmeze terrafrom cand updateaza resurse
+	-o astfel de regula este create_before_destroy 
+	-aceasta se asigura ca atunci cand apare o modificare in configurarea fisierului care forteaza recrearea resursei, o resursa noua este creeata inainte ca cea veche sa fie distrusa
+	
+	lifecycle {
+		prevent_destroy = true
+	}
+
+	-cand avem aceasta regula set to true, terraform va da reject la orice schimbari care vor rezulta in distrugerea resursei respective si ne va afisa un mesaj de eroare
+	-e o regula buna daca vrem sa impedicam ca resursele noastre sa fie sterse accidental, de exemplu o resursa ca o baza de date postgreSQL sau mySQL nu am vrea sa fie stearsa odata ce ea exista
+	-e bine de punctat ca o resursa inca poate sa fie distrusa daca folosim terraform destroy, aceasta regula lifecycle prevent destroy va preveni stergerea resurselor doar prin modificarea argumentelor acestora si rularea comenzii apply ulterior
+	
+	resource "aws_instance" "webserver" {
+		ami = "ami-0edab43b6fa892279"
+		instance_type = "t2.micro"
+		tags = {
+			Name = “ProjectA-Webserver"
+		}
+	}
+	
+	-avem de ex o instanta aws ec2 care deserveste ca un server web, resursa are 2 argumente ami instance type, mai folosim si un tag name de tipul map
+	-cand dam apply, resursa este creeata instanta ec2 cu un tag name si o valoare projecta webserver
+	-daca incercam sa schimbam numele manual in projectb webserver, terraform apply va vedea schimbarea si o sa incerce sa (repare) schimbe inapoi in numele original projecta webserver
+	-in unele cazuri rare, vom vrea schimbrea numelui prin orice metoda care sa fie acceptata si vom vrea ca terraform sa nu mai faca revert la tagul vechi
+	
+	lifecycle {
+		ignore_changes = [
+			tags, ami
+		]
+	}
+	
+	-vom folosi in interiorul declararii resursei block ul livecycle cu regula ignore changes care este o lista cu mai multe argumente/atribute valide ale resursei
+	-daca dam apply, terraform nu va vedea schimbarea pt argumentele descrise in lista si va zice ca there are no changes to apply
+	-putem chiar sa inlocuim lista cu keyword ul all: ignore_changes = all , care va tine cont de toate atributele listei
+
+Order			 Option
+1 		create_before_destroy 		Create the resource first and then destroy older
+2 			prevent_destroy 				Prevents destroy of a resource
+3 			ignore_changes 			Ignore Changes to Resource Attributes (specific/all)
+
+
+Datasources
+
+	-terraform poate citi si fisiere creeate de alte infrastructure as code tools ca ansilbe puppet
+	-pentru a putea folosi continutul unui txt de ex, putem folosi datasources, care il lasa pe tarraform sa citeasca continutul unor fisiere care nu au fost facute de el
+	
+	main.tf
+	
+	resource "local_file" "pet" {
+		filename = "/root/pets.txt"
+		content = data.local_file.dog.content
+	}
+	
+	data "local_file" "dog" {
+		filename = "/root/dog.txt"
+	}
+
+	-in dogs.txt avem textul Dogs are awsome! pe care il putem prelua si pune in resursa poastra pet
+	-pluginul local_file are un sigur argument care ar trebui sa fie folosit , care este filename pe care trebuie sa il citim
+	-deci in loc de content sa aiba un text putem prelua direct textul din dog.txt si sa il punem in content ul resursei create de terraform
+	-pt a creea o resursa folosim keyword ul resource pe cat data source folosim data
+	-resursa creeaza, updateaza si sterge infrastructura pe cat data source doar citeste
+
+Meta Arguments
+
+Count
+
+	-daca introducem argumentul count in resource acesta indica de cate ori sa creem fisierului
+	-dar daca avem o configuratie de genul, in care avem doar un nume pt file urule nostru, deci care nu este unic, vom avea doar un singur fisier creeat deoarece terraform il creeaza si il sterge de 3 ori 
+	
+	resource "local_file" "pet" {
+		filename = var.filename[count.index]
+		
+		count = 3
+	}
+	
+	variabile "filename" {
+		default = "root/pets.txt"
+	}
+
+	-daca vrem sa functioneze cum trebuie si sa avem 3 fisiere create, trebuie sa avem nume unice pt fiecare, deci o lista de nume astfel:
+	
+	variabile "filename" {
+		default = [
+		"root/pets.txt"
+		"root/dogs.txt"
+		"root/cats.txt"
+		]
+	}	
+	
+	-daca adaugam 2 linii cu denumiri noi de file uri in variabila noastra, tot 3 file uri vor fi creeate deoarece count are valoare statica de 3
+	-pt a lua exact nr de denumiri din variabila trb sa folosim functia length astfel
+	
+	resource "local_file" "pet" {
+		filename = var.filename[count.index]
+		
+		count = length(var.filename)
+	}
+
+	variabile "filename" {
+		default = [
+		"root/pets.txt"
+		"root/dogs.txt"
+		"root/cats.txt"
+		"root/cows.txt"
+		"root/ducks.txt"
+		]
+	}	
+
+	-avand lista noastra initiala de 3 file uri sa zicem ca stergem linia cu pets.txt si dam apply
+	-terraform in loc sa stearga doar file ul in cauza, pets.txt(pet[0]), il va sterge pe pet[2] adica cats si va da replace la pet[0](care va lua valoare lui pet[1]) si pet[1](care va lua valoare lui pet[2]) pentru a pastra numerotarea indexilor de la 0, deoarece resursele sunt intr un format de lista
+	
+	Resource 		Resource 								Updates Action
+
+	pet[0]	 "/root/pets.txt" -> "/root/dogs.txt" 		Destroy and Replace
+	pet[1] 	"/root/dogs.txt" -> "/root/cats.txt" 		Destroy and Replace
+	pet[2] 			Does not Exist 								Destroy
+
+for-each
+
+	-in loc de count putem folosi for-each pentru a face acelasi lucru, dar nu creeaza resursele intr o lista
+	-for-each merge doar cu map sau set(lista cu valori neduplicate, unice)
+	
+	main.tf
+	
+	resource "local_file" "pet" {
+		for_each = var.filename
+		filename = each.value
+	}
+	
+	variables.tf
+	
+	variable "filename" {
+		type = set(string)
+		default = [
+			"root/pets.txt"
+			"root/dogs.txt"
+			"root/cats.txt"
+			]
+	}
+	
+	-prima data aducem in argumentul for_each toate valorile din variabla filename din variables.tf si dupa in argumentul resursei noastre numit filename punem aceste valori apeland each.value
+	-tipul variabilei filename este de list, dar noua ne trebuie set sau map
+	-prima varianta este sa ii setam tipul din cod ca fiind set, folosind argumentul type, deoarece setul este o lista care contine doar elemente unice
+	- 1. adaugam type = set(string) pe prima linie din declaratie variable "filename"
+	- a doua varianta este sa schimbam tipul argumentului for-each la set folosind functia toset
+	- 2. for_each = toset(var.filename) in main.tf si in variabiles.tf type = list(string)
+	-daca stergem prima linie din variabila cu pets.txt, terraform va sterge doar resursa respectiva, spre deosebire de cand foloseam count
+	-daca facem un output variable si dam terraform output vom vedea ca resursele sunt stored sub forma de map, nu de list
+	-nu mai sunt indentificate prin indecsi, ci prin keys care sunt denumirea lor /root/cats.txt etc..
+	
+	main.tf
+	
+	output "pets" {
+		value = local_file.pet
+	}
+
+Version Constraints
+
+	-default terraform va folosi ultima versiune pt providerul descris in resursa noastra
+	-nu o sa vrem intotdeauna lucrul asta, deoarece functionalitatea poate varia drastic de la o versiune la alta
+	-e posibilitatea ca configuratia terraform sa nu functioneze cum trebuie daca folosim alta versiune de provider decat cea in care a fost scrisa
+	-daca cautam in terraform registry porviderul local de exemplu vedem ca cea default este 2.0.0 si daca dam sus la version dropdown le vedem pe pe toate
+	-daca dam click pe use provider tab pe dreapta va deschide codu pe care il putem folosi in configuratia noastra pt a folosi o anume versiune, alta decat cea default
+	
+	main.tf
+	
+	terraform {
+	  required_providers {
+	    local = {
+		  source = "haschicorp/local"
+		  version = "1.4.0"
+		}
+	  }
+	}
+	
+	resource "local_file" "pet" {
+	  filename = "/root/pet.txt"
+	  content = "We love pets!"
+	}
+	
+	-aici in block ul terraform avem definite exact providerul si versiunea specifica pe care o sa o folosim pt providerul respectiv
+	-putem folosi si conditii pt a restrictiona anumite versiuni de a fi downloadate
+	-de ex:  version "!= 2.0.0"  asta va face ca versiunea 2.0.0 sa nu fie downloadata si deci ultima disponibila o sa fie downloadata, in cazu nostru 1.4.0
+	-putem folosi si o versiune mai mica decat una pe care o specificam
+	-de ex:  versioun = "<1.4.0"  sau putem sa folosim o versiune mai mare decat cea specificata
+	-de ex:  versioun = ">1.1.0"
+	-putem sa combinam si toate aceste conditii
+	-de ex:  version = "> 1.2.0, < 2.0.0, != 1.4.0"  aici vrem ca versiunea sa fie mai mare ca 1.2.0 dar mai mica ca 2.0.0 dar sa nu fie nici 1.4.0 deci o sa fie in cazul acesta 1.3.0
+	-avem si operatorul pesimist ~ care functioneaza astfel:
+	-de ex:  version =  "~> 1.2"  va lua cea mai recenta dintre versiunile cu 1.x, de ex 1.3 1.4 va lua 1.4 ca nu avem 1.5
+	-putem avea si:  version = "~>1.2.0"  va lua cea mai recenta dintre versiunile 1.2.x de ex 1.2.1 1.2.2 va lua 1.2.2
+	-link ul de la terraform registry pt providerul local este https://registry.terraform.io/providers/hashicorp/local/latest
+	-aici putem gasi toti providerii si versiunile lor
+
+
+Programmatic Access
+
+	-pt a instala aws cli pe windows mergem aici:  https://awscli.amazonaws.com/AWSCLIV2.msi
+	-putem folosi si cloudshell de pe aws direct 
+	-daca il instalam trb sa ii dam si $ aws configure si sa completam ce ni se cere access key si secret access key, pe care le putem lua de la IAM -> Users -> User(numele userlui nostru) -> Security credentials -> Create Access Key
+	-la region eu-north-1 si la format json, mai multe info aici https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
+	-putem verifica daca e ce trebe, dand  cd .aws/config  si dupa  cat config  si  cat credentials 
+	-sintaxa pt comenzi terraform de aws este: $ aws <command> <subcommand> [options and parameters]
+	-de ex comanda pt a creea un iam user:  $ aws iam create-user --user-name lucy
+	
+	  Command 		  Value
+	  command 		   iam
+	 subcommand     create-user
+	   option 	    --user-name
+	 parameter         lucy
+	
+	-aici avem sintaxa si exemple pt toate comenzile iam disponibile https://docs.aws.amazon.com/cli/latest/reference/iam/
+	-$ aws --version  putem vedea daca am instalat corect cli si versiunea lui
+	-$ aws iam help  pt a vedea o descriere a iam si comenzile sale, dar mai la indemana este site ul de mai sus 
+	-$ aws iam list-users  pt a vedea toti userii iam listati
+	-in cli-ul instalat trebuie sa configuram un enpoint global , mai multe info aici https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-endpoints.html
+	-putem cu comanda asta C:\> setx AWS_ENDPOINT_URL http://localhost:4567
+	-sau in fisierul config punem(.aws/config/credentials):  ignore_configure_endpoint_urls = true  si  endpoint_url = http://localhost:4567
+	-cand dam comenzi folosim dupa aws --endpoint http://localhost:4567
+	-de ex pt a ne arata toti userii creati: $ aws --endpoint http://localhost:4567 iam list-users
+	-pt a creea un nou user cu numele mary: $ aws --endpoint http://localhost:4567 iam create-user --user-name mary
+	
+	$ aws --endpoint http://localhost:4567 iam list-users	pt a veadea userii dupa ce am creat unul nou
+
+	$ aws iam attach-user-policy help	-pt a vedea cum se foloseste comanda de atasare a unei policy unui user, sau putem sa o cautam aici https://docs.aws.amazon.com/cli/latest/reference/iam/
+	
+	$ aws --endpoint http://localhost:4567 iam attach-user-policy --policy-arn arn:aws:iam::aws:policy/AdministratorAccess --user-name mary
+	-cu aceasta comanda vom atasa policy ul de administrator access userlui mary, observam ca avem nevoie de optiunile policy arn care este identificatorul unpic pt un anumit policy si numele userului caruia ii atasam policy ul
+	
+	$ aws --endpoint http://localhost:4567 iam create-group --group-name project-sapphire-developers
+	-cu aceasta comanda vom creea un group de useri numit project-sapphire-developers in care vom atasa userii
+	
+	$ aws --endpoint http://localhost:4567 iam add-user-to-group --user-name jack --group-name project-sapphire-developers
+	-cu aceasta comanda vom adauga in grupul creeat anterior userul jack 
+	
+	$ aws --endpoint http://localhost:4567 iam add-user-to-group --user-name jill --group-name project-sapphire-developers
+	-similar ca sus doar ca pt userul jill
+
+	$ aws --endpoint http://localhost:4567 iam list-attached-group-policies --group-name project-sapphire-developers
+	-pt a vedea policy urile atasate unui grup, deocamdata nu avem niciuna
+
+	$ aws --endpoint http://localhost:4567 iam list-attached-user-policies --user-name jack
+	-pt a vedea policy urile atasate direct unui user, nu avem niciuna
+
+	$ aws --endpoint http://localhost:4567 iam list-attached-user-policies --user-name jill
+	-similar mai sus nu avem nicio policy nici pt jill
+
+	$ aws --endpoint http://localhost:4567 iam attach-group-policy --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess --group-name project-sapphire-developers
+	-cu aceasta comanda vom atasa un policy unui anumit grup specificat, avem nevoie de arn ul policy ului si de numele grupului caruia i-o atasam
+	-arn urile policy urilor le putem gasi de ex direct pe aws aici https://us-east-1.console.aws.amazon.com/iam/home?region=eu-north-1#/policies/details/arn%3Aaws%3Aiam%3A%3Aaws%3Apolicy%2FAmazonEC2FullAccess?section=permissions
+	
+	
+IAM with Terraform
+
+	-pt a creea un iam user cu terraform trebuie sa folosim resursa aws_iam_user ,pt care gasim documentatie aici https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user
+	
+	resource "aws_iam_user" "admin-user" {
+		name = "lucy"
+		tags = {
+			Description = "Tehnical Team Leader"
+		}
+	}
+	
+	-daca dam terraform init, se va descarca plugin ul aws necesar
+	-daca dam si plan, vom avea o eroare ca nu avem credentialele aws pt user specificate
+	-o varianta mai putin secure ar fi sa le adaugam in main.tf unde avem si resursa scrisa
+	
+	main.tf
+	
+	provider "aws" {
+		region = "us-west-2"
+		access_key = "AKAIA44QH8DGBEXAMPLE"
+		secret_key = "je7MtGbClwBF/2tk/h3yCo0n..."
+	}
+	resource "aws_iam_user" "admin-user" {
+	...
+	}
+	
+	-acum daca dam plan si apply o sa mearga
+	-o varianta mai secure ar fi sa punem aceste credentiale(access_key si secret_key) in folderul hidden .aws/config/credentials sau sa dam comanda $ aws configure si sa le scriem acolo rezultatul e acelasi
+	-si region sa il punem in folderul .aws/config/config (daca mergem pe varianta manuala adica sa nu dam comanda aws configure si sa mergem sa editam folderul cu nano)
+	-in orice caz cele doua fisiere ar trebui sa arate asa:
+	
+	$ cat .aws/config/config
+	[default]
+	region = us-west-2
+	output = text
+	
+	$ cat .aws/config/credentials
+	[default]
+	aws_access_key_id = AKAIA44QH8DGBEXAMPLE
+	aws_secret_access_key = "je7MtGbClwBF/2tk/h3yCo0n..."
+
+	-o a treia varianta ar fi sa ne folosim de enviroment variables
+	
+	$ export AWS_ACCESS_KEY_ID=AKAIA44QH8DGBEXAMPLE
+	$ export AWS_SECRET_ACCESS_KEY_ID=je7MtGbClwBF/2tk/h3yCo0n...
+	$ export AWS_REGION=us-west-2
+	
+IAM policies with Terraform
+
+	-dupa ce creeam un user, putem sa ii asignam si policies https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy
+	-resursa pt policy se numeste aws_iam_policy 
+	-versiunea statement ul policy ului le putem lua direct din aws din iam policies https://us-east-1.console.aws.amazon.com/iam/home?region=eu-north-1#/policies
+	-folosim <<EOF ca delimitator pt descrierea policy-ului
+	-pana acuma am creeat userul si policy ul, pt a si atasa userului policy ul folosim aws_iam_user_policy_attachment
+	
+	main.tf
+	
+	resource "aws_iam_user" "admin_user" {
+		name = lucy
+		tags = {
+			Description = "Tehnical Team Leader"
+		}
+	}
+	
+	resource "aws_iam_policy" "adminUser" {
+		name = "AdminUsers"
+		policy = <<EOF
+			{
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Action": "*",
+						"Resource": "*"
+					}
+				]
+			}
+			EOF
+	}
+	
+	resource "aws_iam_user_policy_attachment" "lucy_admin_access" {
+		user = aws_iam_user.admin_user.name
+		policy-arn = aws_iam_policy.adminUser.arn
+	}
+	
+	-in loc de folosirea delimitatorului EOF putem scrie policy ul si astfel:
+	
+	 policy = jsonencode({
+		Version = "2012-10-17"
+		Statement = [
+		  {
+			Action = [
+			  "ec2:Describe*",
+			]
+			Effect   = "Allow"
+			Resource = "*"
+		  },
+		]
+    })
+	
+	-alt exemplu de configuratie e urmatoarea, avem si profider.tf configurat deoarece folosim framework ul mock pt a comunica cu aws, daca folosim direct aws cloud cli nu mai trb asa ceva
+	
+	iam-user.tf
+	
+	resource "aws_iam_user" "users" {
+		name = var.project-sapphire-users[count.index]
+
+		count = length(var.project-sapphire-users)
+	}
+	
+	variables.tf
+	
+	variable "project-sapphire-users" {
+		type = list(string)
+		default = [ "mary", "jack", "jill", "mack", "buzz", "mater"]
+	}
+	
+	provider.tf
+	
+	provider "aws" {
+	  region                      = "us-east-1"
+	  skip_credentials_validation = true
+	  skip_requesting_account_id  = true
+
+	  endpoints {
+		iam                       = "http://aws:4566"
+	  }
+	}
+	
+	-aici folosim un count pt a prelua lista de nume din variables.tf si a crea iam useri cu ele in iam-user.tf
+	-documentatia pt count si for_each  https://developer.hashicorp.com/terraform/language/meta-arguments/count
+	
+S3 with Terraform
+
+	-pt a creea un s3 bucket si un object(file) in interiorul acestuia putem proceda astfel:
+	-prima resursa creeata numita finance este s3 bucket ul in care vom pune obiecte
+	-a doua resursa creeata este obiect-ul(file-ul) pe care il vom pune in bucket
+	-a treia data source este un grup iam existent pe aws, caruia ii preluam arn-ul sa il folosim ulterior in policy-ul bucket-ului
+	-a patra resursa este pt a atribui bucket ului un policy, unde avem nevoie de 2 argumente mandatory, numele bucket ului si documentul json al policy ului
+	-in cadrul documentului json al policy ului este specificat si group arn, pt ca toti userii acestui grup sa aiba access la bucket ul nostru
+	
+	
+	main.tf
+	
+	resource "aws_s3_bucket" "finance" {
+		bucket = "finance-21092020"
+		tags = {
+			Description = "Finance and Payroll"
+		}
+	}
+	
+	resource "aws_s3_bucket_object" "finance-2020" {
+		content = "/root/finance/finance-2020.doc"
+		key     = "finance-2020.doc"
+		bucket  = aws_s3_bucket.finance.id
+	}
+	
+	data "aws_iam_group" "finance-data" {
+		group_name = "finance-analysts"
+	}
+	
+	resource "aws_s3_bucket_policy" "finance-policy" {
+		bucket = aws_s3_bucket.finance.id
+		policy = <<EOF
+		{
+			"Version": "2012-10-17",
+			"Statement": [
+				{
+					"Action": "*",
+					"Effect": "Allow",
+					"Resource": "arn:aws:s3:::${aws_s3_bucket.finance.id}/*",
+					"Principal": {
+						"AWS": [
+							"${data.aws_iam_group.finance-data.arn}"
+						]
+					}
+				}
+			]
+		}
+		EOF
+	}
+	
+	ATENTIE
+	-in loc de resursa aws_s3_bucket_object care este depreciat si va fi eliminat in curand putem folosi aws_s3_object
+	-in loc de content putem scrie source, e tot aia
+	-in fisierul profider.tf avem descrisa specific versiunea providerului de aws care sa fie instalata
+	-variabilele pt a da skip la credentiale si account id sunt puse pe true
+	-regiunea este importata din variables.tf care ia automat valoarea din terraform.tfvars 
+	
+	main.tf 
+	
+	resource "aws_s3_object" "upload" {
+	  source = "/root/woody.jpg"
+	  key = "woody.jpg"
+	  bucket = "pixar-studios-2020"
+	}
+	
+	provider.tf
+	
+	terraform {
+	  required_providers {
+		aws = {
+		  source = "hashicorp/aws"
+		  version = "4.15.0"
+		}
+	  }
+	}
+
+	provider "aws" {
+	  region                      = var.region
+	  s3_use_path_style = true
+	  skip_credentials_validation = true
+	  skip_requesting_account_id  = true
+
+	  endpoints {
+		s3                       = "http://aws:4566"
+	  }
+	}
+
+	variables.tf
+	
+	variable "region" {
+	}
+	
+	terraform.tfvars
+	
+	region = "us-east-1"
+	
+	
+DynamoDB with Terraform
+	
+	-https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dynamodb_table
+	-cu ajutorul resursei "aws_dynamodb_table" putem creea un tabel de tip dynamo db in aws
+	-argument ul name este required , deoarece este numele tabelului
+	-argument ul hash_key este de asemenea required, deoarece este primary key al tabelului 
+	-asadar, va trebui neaprat sa o declaram si in argumentul attribute, dupa cum o sa facem in ex urmator
+	-argument ul, billing_mode are valoarea default "PROVISIONED" si in acest caz sunt required si argumentele read_capacity si write_capacity
+	-aceste doua argumente sunt efectiv numaru de iteme care pot fi scrise si citite in tabel
+	-daca dam valoarea argumentului billing_mode "PAY_PER_REQUEST" nu vor mai fi required cele doo argumente
+	-in argumentul attribute este required sa il descriem pe hash_key si range_key, care este un atribut folosit ca si o cheie de sortare (sort key)
+	-in acest tip de baze de date putem avea si alte atribute decat cele descrise in resursa, dar trebuie neaparat sa avem hash key, adica cheia primara
+	
+	main.tf
+	
+	resource "aws_dynamodb_table" "cars" {
+		name         = "cars"
+		hash_key     = "VIN"
+		billing_mode = "PAY_PER_REQUEST"
+		attribute {
+			name = "VIN"
+			type = "S"		//adica tipul este string, poate fi si number N
+		}
+	}
+	
+	resource "aws_dynamodb_table_item" "car-items" {
+		table_name = aws_dynamodb_table.cars.name
+		hash_key   = aws_dynamodb_table.cars.hash_key
+		item 	   = <<EOF
+		
+		{
+			"Manufacturer" : {"S": "Toyota"},
+			"Make": {"S": "Corolla"},
+			"Year": {"N": "2004"},
+			"VIN": {"S": "4Y1SL65848Z411439"},
+		}
+		EOF
+	}
+		
+		
+	main.tf ///alt exemplu
+	
+	resource "aws_dynamodb_table" "project_sapphire_inventory" {
+	  name           = "inventory"
+	  billing_mode   = "PAY_PER_REQUEST"
+	  hash_key       = "AssetID"
+
+	  attribute {
+		name = "AssetID"
+		type = "N"
+	  }
+	  attribute {
+		name = "AssetName"
+		type = "S"
+	  }
+	  attribute {
+		name = "age"
+		type = "N"
+	  }
+	  attribute {
+		name = "Hardware"
+		type = "B"
+	  }
+	  global_secondary_index {
+		name             = "AssetName"
+		hash_key         = "AssetName"
+		projection_type    = "ALL"
+		
+	  }
+	  global_secondary_index {
+		name             = "age"
+		hash_key         = "age"
+		projection_type    = "ALL"
+		
+	  }
+	  global_secondary_index {
+		name             = "Hardware"
+		hash_key         = "Hardware"
+		projection_type    = "ALL"
+		
+	  }
+	}
+
+	resource "aws_dynamodb_table_item" "upload" {
+	  table_name = aws_dynamodb_table.project_sapphire_inventory.name
+	  hash_key   = aws_dynamodb_table.project_sapphire_inventory.hash_key
+	  item = <<EOF
+
+	  {
+		"AssetID": {"N": "1"},
+		"AssetName": {"S": "printer"},
+		"age": {"N": "5"},
+		"Hardware": {"B": "true"}
+	  }
+	  EOF
+	}
+	
+Remote Backend with S3
+
+	-pt a nu avea probleme cu file urile terraofrm.tfstate in cazul in care sunt puse local pe doua repo-uri si 2 developeri incearca sa faca modificari in acelasi timp pot aparea probleme
+	-deci, mai bine punem pe s3 terraform.tfstate file ul , asadar avem nevoie de un bucket s3 si un dynamodb table
+	
+	main.tf
+	
+	resource "local_file" "pet" {
+		filename = "/root/pets.txt"
+		content = "We love pets!"
+	}
+	
+	terraform.tf
+	
+	terraform {
+		backend "s3" {
+			bucket = "kodekloud-terraform-state-bucket01"
+			key = "finance/terraform.tfstate"
+			region = "us-west-1"
+			dynamodb_table = "state-locking"
+		}
+	}
+	
+	-acum dam init si apply si putem sterge terraform.tfstate de pe hard-ul local
+	
+	-alt exemplu de configuratie, unde prima oara este locala si ulterior o facem remote
+	
+	main.tf
+	
+	resource "local_file" "state" {
+		filename = "/root/${var.local-state}"
+		content = "This configuration uses ${var.local-state}"  
+	}	
+	
+	variables.tf
+	
+	variable remote-state {
+		type = string
+		default = "remote"
+	}
+	variable local-state {
+		type = string
+		default = "local"
+	}
+	
+	-dupa ce dam terraform apply , vedem ca o sa se creeze un state file terraform.tfstate
+	
+	main.tf
+	
+	resource "local_file" "state" {
+		filename = "/root/${var.remote-state}"
+		content = "This configuration uses ${var.remote-state} state"  
+	}
+	
+	-inlocuim state ul cu cel remote si creeam un nou file numit terraform.tf pt a configuratia de backend
+	
+	terraform.tf
+	
+	terraform {
+		backend "s3" {
+		  bucket = "remote-state"
+		  key = "terraform.tfstate"
+		  region = "us-east-1"
+		}
+	}
+	
+	-dam terraform init acuma dupa ce am schimbat state ul si vom vedea ca este urcat pe bucket terraform.tfstate file ul, il putem sterge pe cel creeat initial pe hard
+	
+Terraform State Commands
+
+	-file ul terraform.tfstate nu ar trebui editat manual ci manipulat(citit, ediat) cu ajutorul comenzii state si subcomenzilor acesteia
+	
+	$ terraform state list
+	
+	aws_dynamodb_table.cars
+	aws_s3_bucket.finance-2020922
+	
+	-aceasta comanda ne va afisa care sunt resursele pt care a fost creeat file ul terraform.tfstate
+	-putem sa o rulam si cu un argument, sa ni l afiseze daca exista resursa respectiva
+	
+	$ terraform state list aws_dynamodb_table.cars
+		
+	-comanda state show ne va arata toate atributele unei resurse din state file
+	
+	$ terraform state show aws_s3_bucket.finance-2020922 
+	
+	-comanda state mv (move) este folosita pt a redenumi o resursa dintr-un state file, sau pt a muta o resursa dintr un state file in altul
+	
+	-de exemplu avem o resursa dynamodb in care vrem sa ii schimbam numele tabelului fara a o sterge
+	
+	main.tf
+
+	resource "aws_dynamodb_table" "state-locking" {
+		name = "state-locking"
+		billing_mode = "PAY_PER_REQUEST"
+		hash_key = "LockID"
+		attribute {
+			name = "LockID"
+			type = "S"
+			}
+	}
+
+	
+	-bineinteles ca numele tabelului va fi in terraform.tfsate file scris state-locking
+	-dupa ce dam comanda, atributa name (numele tabelului) din terraform.tfsate file va fi schimbata si va trebui sa o schimbam noi manual in main.tf pentru a preveni distrugerea si inlocuirea resursei
+	-daca dam apply dupa acesti pasi vom vedea ca nu este nicio modificare de facut
+	
+	$ terraform state mv aws_dynamodb_table.state-locking aws_dynamodb_table.state-locking-db
+	
+	-mai devreme am vazut ca remote terraform.tfstate file nu mai este in directorul de configuratie
+	-dar putem vedea continutul acestui fisier totusi cu comanda pull, care va downloada si fa afisa pe ecran continutul statefile ului
+	
+	$ terraform state pull
+	
+	-output ul acestei comenzi poate fi pasat la tool uri json query ca si JQ pt a da filter la datele care ne trebuiesc
+	-de exemplu pt a returna numele hash key ului din tabelul creeat anterior dam comanda astfel:
+	
+	$ terraform state pull | jq '.resources[] | select(.name == "state-locking-db")|.instances[].attributes.hash_key'
+	
+	"LockID"
+	
+	-comanda rm e folosita pt a sterge iteme dintr un terraform.tfstate file 
+	-comanda e folosita atunci cand nu mai vrem sa managiuim una sau mai multe resurse prin actualele terraform configuration si state 
+	-dupa ce dam run la comanda, resursa va fi stearsa din state file, dar trebuie sa stergem manual block ul unde a fost scrisa resursa in configuration file mani.tf -> resource ... { ... }
+	-ATENTIE: resursele sterse din state file nu sunt sterse si din infrastructura reala, ci sunt doar sterse din terraform management
+	
+	$ terraform state rm aws_s3_bucket.finance-2020922
+	
+	
+	resource "random_pet" "super_pet_1" {
+		length = var.length1
+		prefix = var.prefix1
+	}
+	resource "random_pet" "super_pet_2" {
+		length = var.length2
+		prefix = var.prefix2
+	}
+	
+	$ terraform state mv random_pet.super_pet_1 random_pet.ultra_pet
+	
+AWS EC2 With Terraform
+	
+	-codul necesar pt a creea o insanta ec2 aws cu terraform
+	-atributele ami si instance type sunt obligatorii, iar tags este optional ca si user data pe care o dam noi si e folosita la pornirea instantei
+	-va trebui sa avem si un key pair pt conexiunea la ec2u nostru, pe care o vom downloada de pe aws
+	-pe langa key pair avem nevoie si de un security group pe care il configuram pe aws si il folosim aici 
+	
+	main.tf
+	
+	resource "aws_instance" "webserver" {
+		ami			  = "ami-06b21ccaeff8cd686"
+		instance_type = "t2.micro"
+		tags = {
+			Name = "webserver"
+			Description = "An Nginx WebServer On Ubuntu"
+		}
+		user_data = <<-EOF	
+					#!/bin/bash
+					sudo apt update
+					sudo apt install ngnix -y
+					systemctl enable ngnix
+					systemctl start ngnix
+					EOF
+		key_name  = aws_key_pair.web.id 
+		vpc_security_group_ids = [ aws_security_group.ssh-access.id ]
+	}
+	
+	resource "aws_key_pair" "web" {
+		public_key = file("/root/.ssh/web/pub")	 //putem da si direct cheia publica in loc de locatie  	 "sshrsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDicpU+kT9isaZy7cHYa+oCTUolS6Tg6vCEq+ufucIMrA7RLTngi+YfTfvgrY2UiHGxuuJ1lEyT0x2UrGexVx4G2TzX/am2WFzNbcGSg2bCXTkVQY93KOhbW9y851a+g1wI7TODC0oxEMFr/CVsrJ4bfbp8S896VKBxC1WpSU9GscPP28GVuDgm2ATBuL78AF root@iac-server"
+	}
+	
+	resource "aws_security_group" "ssh-access" {
+		name		= "ssh-access"
+		description = "Allow SSH access from the internet"
+		ingress {
+			from_port   = 22
+			to_port     = 22
+			protocol    = "tcp"
+			cidr_blocks = ["0.0.0.0/0"]
+		}
+	}
+	
+	output publicip {
+		value 	 = aws_instance.webserver.public_ip
+	}
+	
+	provider.tf
+	
+	provider "aws" {
+		region = "us-west-1"
+	}
+	
+Terraform Provisioners
+
+	-provisioners ne ofera o cale de a da task uri cum ar fi rulatu de comenzi sau script uri pe resurse remote sau local pe masinaria unde este terraform instalat
+	-de ex pt a rula un bash script dupa ce o resursa este creeata putem folosi remote exec provisioners
+	-folosind exemplul clasic de webserver putem pasa un script inline asa:
+	
+	main.tf
+	
+	resource "aws_instance" "webserver" {
+		ami			  = "ami-06b21ccaeff8cd686"
+		instance_type = "t2.micro"
+		
+	    provisioner "remote-exec" {
+			inline = [ "sudo apt update",
+					   "sudo apt install ngix -y",
+					   "sudo systemctl enable nginx",
+					   "sudo systemctl start nginx",
+					 ]
+		}
+		connection {
+			type = "ssh"
+			host = self.public_ip
+			user = "ubuntu"
+			private_key = file("/root/.ssh/web/pub")
+		}
+		key_name  = aws_key_pair.web.id 
+		vpc_security_group_ids = [ aws_security_group.ssh-access.id ]
+	}
+	
+	-doar scriind provisional block cu script ul, nu e suficinet pt a garanta ca vor merge comenzile, trebuie sa stabilim si un network connectivity intre local machine ul nostru si aws ec2 insance
+	-avem nevoie si de security group pe care in exemplu de mai sus il creeam noi, dar poate fi un grup deja existent pe contu de aws
+	-ar trebui sa fie si un mecanism de autentificare folosit pt a ne conecta la acesta insante ec2, de obicei un SSH key pair care poate fi folosit pt a accesa insanta
+	-iarasi in acest exemplu creeam noi un key pair dar paote fi unul deja existent in contu aws
+	-pt a facilita conexiunea putem folosi un connection block
+	-acesta e un exemplu de AMI bazat pe linux deoarece tipul conexiunii este SSH
+	-in argumentul host specificam ip address-ul public al instantei care a fost creeata si cum operam direct in resource block, putem folosi expresia self.public_ip. Asta se va traduce efectiv in adresa ip publica a instantei care a fost creeata
+	-userul in acest caz este Ubuntu, deoarece este userul default creeat in acest AMI si key ul pe care il folosim sa ne conectam este cea privata
+	
+	-provisionerul local-exec e folosit pt a rula task uri pe local machine unde rulam terraform binary si nu pe resursele creeate de terraform
+	-vine la indemana cand vrem sa luam niste date si sa le scriem intr un file local
+	-de ex, daca vrem sa depozitam ip ul public al instantei ec2 care tocmai a fost provisioned, intr un file ip.txt localizat in /tmp , putem rula local exec provisioner asa:
+	
+	main.tf
+	
+	resource "aws_instance" "webserver" {
+		ami			  = "ami-06b21ccaeff8cd686"
+		instance_type = "t2.micro"
+	    provisioner "local-exec" {
+			command = "echo ${aws_instance.webserver.public_ip} >> /tmp/ips.txt"
+		}
+		connection {
+			type = "ssh"
+			host = self.public_ip
+			user = "ubuntu"
+			private_key = file("/root/.ssh/web/pub")
+		}
+		key_name  = aws_key_pair.web.id 
+		vpc_security_group_ids = [ aws_security_group.ssh-access.id ]
+	}
+	
+	-default, provisionerii sunt rulati dupa ce resursele este creeata, acesta este behaviourl default si e numit create time provisioner(1)
+	-putem de asemenea sa rulam provisionerul dupa ce o resursa este distrusa, e numit destoryed time provisioner(2)
+	
+	(1)
+	provisioner "local-exec" {
+		command = "echo ${aws_instance.webserver.public_ip} Created! > /tmp/instance_state.txt"
+	}
+	
+	(2)
+	provisioner "local-exec" {
+		when    = destroy
+		command = "echo ${aws_instance.webserver.public_ip} Destroyed! > /tmp/instance_state.txt"
+	}
+	
+	-alt comportament default al provisionerului este ca atunci cand comanda sau script ul dau fail , terraform apply va da eroare de asemenea
+	-de exemplu, aici este scris temp in loc de tmp
+	-putem da si noi explicit argumentul care specifica acest comportament default, dar nu este obligatoriu, deoarece acesta este asa by default, deci este un fel de pleonasm
+	-orice resursa care este creeata in timp ce provisionerul da fail este marcata ca si tainted in terraform
+	-daca vrem ca comanda apply sa nu dea fail si ca resursa sa fie creeata cu succes, chiar daca comanda provisioerului sau script ul da fail, putem seta valoarea argumentului on failure sa continue si asa vom suprascrie comportamentul default
+	
+	provisioner "local-exec" {
+	on_failure = true	// on_failure = continue	-pt a creea resursa
+		command = "echo ${aws_instance.webserver.public_ip} Created! > /temp/instance_state.txt"
+	}
+	
+	-un best practice ar fi sa folosim provisionerii ca ultima solutie
+	-oricand e posibil sa folosim optiuni disponibile in mod nativ pt tipurile de resurse ale providerul folosit
+	-de exemplu sa folosim user data cand creeam instante ec2 
+ 	
+	main.tf
+	
+	resource "aws_instance" "webserver" {
+		ami			  = "ami-06b21ccaeff8cd686"
+		instance_type = "t2.micro"
+		tags = {
+			Name = "webserver"
+			Description = "An Nginx WebServer On Ubuntu"
+		}
+		user_data = <<-EOF	
+					#!/bin/bash
+					sudo apt update
+					sudo apt install ngnix -y
+					systemctl enable ngnix
+					systemctl start ngnix
+					EOF
+		key_name  = aws_key_pair.web.id 
+		vpc_security_group_ids = [ aws_security_group.ssh-access.id ]
+	}
+	
+	-alt exemplu de descriere a unei instante ec2
+	
+	main.tf
+	
+	resource "aws_instance" "cerberus" {
+		ami           = var.ami
+		instance_type = var.instance_type
+		user_data     = file("./install-nginx.sh")	//sau puteam cu EOF...file ul install-nginx.sh e in interiorul folderului cu toate alea    User data scripts only run at first boot whereas the instance modification causes a reboot.
+		key_name      = aws_key_pair.cerberus-key.id
+	}
+	
+	resource "aws_key_pair" "cerberus-key" {
+	  key_name   = "cerberus"
+	  public_key = file("/root/terraform-projects/project-cerberus/.ssh/cerberus.pub")
+	}
+	
+	resource "aws_eip" "eip" {
+		instance = aws_instance.cerberus.id
+		vpc = true
+		provisioner "local-exec" {
+			command = "echo ${aws_eip.eip.public_dns} >> /root/cerberus_public_dns.txt"
+		}	
+	}	
+	-resursa elastic ip pt a nu schimba ip ul mereu cand modificam resursa aws instance
+	-ii dam argumentul insance cu id ul ec2 ului nostru , vpc il punem true, si creeam un provisioner local care sa bage in txt ul din path public dns ul resurse elastic ip
+	
+
+	variables.tf
+	
+	variable region {
+		type = string
+		default = "eu-west-2"
+	}
+
+    	variable ami {
+		type = string
+		default = "ami-06178cf087598769c"
+	}
+
+	variable instance_type {
+		type = string
+		default = "m5.large"
+	}
+
+
+	provider.tf
+	
+	terraform {
+	  required_providers {
+		aws = {
+		  source = "hashicorp/aws"
+		  version = "4.15.0"
+		}
+	  }
+	}
+	provider "aws" {
+	  region                      = var.region
+	  skip_credentials_validation = true
+	  skip_requesting_account_id  = true
+
+	  endpoints {
+		ec2 = "http://aws:4566"
+	  }
+	}
+
+
+Terraform Taint
+
+	main.tf
+	
+	resource "aws_instance" "webserver-3" {
+		ami		= "ami-06178cf087598769c"
+		instance_type = "t2.micro"
+		key_name = "ws"
+		provisioner "local-exec" {
+			command = "echo ${aws_instance.webserver-3.public_ip} > /temp/pub_ip.txt"
+		}
+	}
+
+	-cand dam terraform apply la o resursa si este o eroare in sintaxa, ca si in ex anterior, era gresit path ul, comanda apply va da eroare si resursa va fi marcata ca si tainted, asta poate fi vazut cand dam plan din nou
+	-adica, data viitoare cand rulam apply, resursa va fi recreata
+	-in acest caz, pasul unde a crapat este in comanda provisionerului local-exec 
+	-insanta ec2 a fost creeata cu succes, dar terraform va incerca sa recreeze intreaga resursa deoarece a fost marcata ca si tainted
+	-mai sunt cazuri in care am vrea noi intentionat sa fortam o resursa sa fie recreeata:
+	-de ex, un caz ar fi ca facem schimbari manuale la o insanta aws, care e menegiuita de terraform - schimbam versiunea de ngnix care merge pe insanta manual, o stergem si o instalam pe una mai noua
+	-ca sa refacem insanta, ori dam terraform destory si dupa dam apply din nou
+	-o varianta mai potrivita ar fi sa marcam resursa ca si tainted:
+	
+	$ terraform taint aws_instance.webserver
+	
+	-cand dam terraform plan dupa asta, vom vedea ca reusrsa e setata sa fie recreeata
+	-putem da si undo la taint la o resursa specifica:
+	
+	$ terraform untaint aws_instance.webserver
+	
+
+Terraform Debugging
+
+	-pt a ne da seama de cauza unei anumire probleme la creearea unei resurse trebuie sa ne uitam pe logs
+	-desi vedem de obicei in terraform apply indicatii bune despre cauzele erorii, uneori trebuie sa mergem mai departe
+	-ca sa facem asta, trebuie sa folosim un enviroment variable TF_LOG si sa o setam la una dintre valorile de log level
+	
+	$ export TF_LOG=TRACE
+	
+	-Terraform ofera file log levels: INFO, WARNING, ERROR, DEBUG, TRACE  , trace fiind cea mai detaliata
+	-cand rulam comenzi terraform, dupa ce setam enviroment variable, ar trebui sa vedem multe log uri aditionale, bazate pe nivelul setat
+	-de ex terraform plan cu levelul setat la trace va printa sute de linii, incluzandu le pe cele care sunt rulate intern de plugin ul terraform in folosinta
+	-aceste log uri sunt folositoare cand lucrurile nu merg ca si asteptat in terraform intern, in acest caz log urile pot fi folosite sa facem un bug report cu terraform
+	-pt a pune log urile persistent intr un file, folosim enviroment variableu numit TF_LOG_PATH si ii setam un path:
+	
+	$ export TF_LOG_PATH=/tmp/terraform.log
+	
+	-putem afisa primele 10 linii din .log asa: $ head -10 /tmp/terraform.log
+	-daca vrem sa dam disable la logging de tot dam unset la variabila:
+	
+	$ unset TF_LOG_PATH
+	
+	
+Terraform Import
+
+	main.tf
+	
+	data "aws_instance" "newserver" {
+		insance_id = "i-026e13be10d5326f7"
+	}
+	output newserver {
+		value = data.aws_instance.newserver.public_ip
+
+	-in exemplu de mai sus, folosim tipul de resursa data sa preluam o instanta de aws creeata de alt tool decat terraform gen aws management console sau ansible..
+	-prin ce am facut mai sus noi doar preluam public ipul resursei si daca dam apply il vom afisa pe ecran
+	-dar resursa in sine nu este menegiuita sau sub controlul terraform, deci nu putem sa o updatam sau stergem
+	-putem sa o facem sa fie asa cu terraform import
+	
+	$ terraform import aws_instance.webserver-2 i-b4766379e4331d8f5
+
+	-daca rulam acum comanda, fisierele de configurare din folder nu vor fi updatate cu atributele acestei instante aws
+	-prima oara cand rulam comanda vom avea o eroare pt ca terraform import nu updateaza fisierele de configurare deloc
+	-updateaza doar state file ul cu detaliile infrstructurii importate
+	-trebuie sa scriem manual configuratia pt resursa importata
+	-ca sa reparam eroarea si sa continuam cu importu, putem scrie un resource block gol asa:
+	
+	main.tf
+
+	resource "aws_instance" "webserver-2" {
+		# (resource arguments)
+	}
+
+	-dupa ce am scris acest resource block, putem rula din nou comanda import si de data aceasta va merge fara erori
+	-resursa este acum importata in terraform state file
+	-acum, putem completa resource block ul pt webserver-2, definind toate resource arguments si valorile lor
+	-pt a lua valorile argumentelor pt aceasta instanta ec2, putem vedea instanta din aws management console 
+	-alternativ, putem sa ne uitam in state file si sa cautam atributele 
+	- o sa gasim "type": "aws_instance", "name": "webserver-2", provider /aws\ si dedesubt toate atributele: ami, instance state, instance type, key name, tags : name
+	-dupa ce le gasim pe toate, le completam in block ul resursei aws_instance webserver-2
+	
+	resource "aws_instance" "webserver-2" {
+		ami                    = "ami-0edab43b6fa892279"
+		instance_type          = "t2.micro"
+		key_name               = "ws"
+		vpc_security_group_ids = ["sg-8064fdee"]
+	}
+	
+	-odata ce toate argumentele si valorile corecte au fost definite, terraform plan va da refresh la state si va intelege ca instanta ec2 exista deja si nu va face nicio actiune (No changes. Infrastructure is up-to-date.)
+	-resursa este acuma sub controlul terraform, deci de acuma orice schimbare facuta la configuration file(main.tf) va putea fi aplicata mai departe cu terraform plan, init 
+	-alt exemplu de configuratie tf
+	
+	main.tf
+	
+	resource "aws_instance" "ruby" {
+	  ami           = var.ami
+	  instance_type = var.instance_type
+	  for_each      = var.name
+	  key_name      = var.key_name
+	  tags = {
+		Name = each.value
+	  }
+	}
+	output "instances" {
+	  value = aws_instance.ruby
+	}
+
+	
+	variables.tf
+	
+	variable "name" {
+	  type    = set(string)
+	  default = ["jade-webserver", "jade-lbr", "jade-app1", "jade-agent", "jade-app2"]
+	}
+	variable "ami" {
+	  default = "ami-0c9bfc21ac5bf10eb"
+	}
+	variable "instance_type" {
+	  default = "t2.nano"
+	}
+	variable "key_name" {
+	  default = "jade"
+	}
+
+	
+	-comanda pt a creea un key pair in AWS CLI
+	$ aws ec2 create-key-pair --endpoint http://aws:4566 --key-name jade --query 'KeyMaterial' --output text > /root/terraform-projects/project-jade/jade.pem
+	
+	-comanda aws ec2 describe-instances pt a lista toate instantele ec2 care sunt create pe un cont de aws
+	-folosim endpoint ul pt ca suntem in asta de training, dar in AWS CLI nu trebuie folosit
+	
+	Run the command: $ aws ec2 describe-instances --endpoint http://aws:4566
+
+	Alternatively to just get the id of the EC2 created with this AMI and Instance Type, use filters and jq tool to filter the data: -
+
+	$ aws ec2 describe-instances --endpoint http://aws:4566  --filters "Name=image-id,Values=ami-082b3eca746b12a89" | jq -r '.Reservations[].Instances[].InstanceId'
+	
+	-o cautam pe cea cu numele jade-mw
+	-acum vrem sa o facem sa fie manegenuita de terraform, incepem prin a creea un resource block gol cu numele de jade-mw
+	
+	resource "aws_instance" "jade-mw" {
+	}
+	
+	-acum rulam comanda urm, unde avem terraform import tipul resursei.numele resursei id ul resursei
+	
+	$ terraform import aws_instance.jade-mw i-6f4936e5fbcf495a1	
+	
+	-acum daca dam apply ne va da eroare deoarece nu am scris configuratia pt resursa noastra
+	
+	resource "aws_instance" "jade-mw" {
+	  ami = "ami-082b3eca746b12a89"
+	  instance_type = "t2.large"
+	  key_name= "jade"
+	  tags = {
+		Name= "jade-mw"
+	  }
+	  timeouts {
+	  }
+	}
+	
+	-intram in fisierul tf state si dam ctrl f la jade-mw si gasim urm atribute: ami, instance type, key name si name care e in tags si timeouts care e gol 
+	
+Terraform Modules
+
+	-un modul terraform este un folder care contine una sau mai multe configuration files, de ex main.tf si variables.tf
+	-orice configuratie terraform are cel putin un modul, numit root module
+	-sa zicem ca avem un modul in fodlerul root, numit aws-instance, unde avem 2 fisiere de configuratie main.tf si variables.tf pentru un aws instance
+	-daca dam run la comenzile terraform de aici, acesta va fi root directory
+	-sa zicem ca facem un alt folder in /root pt o noua instanta aws, numit development
+	-in loc sa scriem iarasi configuratia de la 0, sau sa dam copy paste din primul modul, putem folosi un module block sa preluam codul care este in primul modul creeat, care contine configuratia pt o instanta aws ec2, facand un main.tf asa:
+	
+	module "dev-webserver" {
+		source = "../aws-instance"
+	}
+	
+	-acum, deoarece rulam comenzi terraform in noul folder development, acesta va fi noul root module, iar primul modul creeat cu instanta aws pe care il apelam in noul modul este considerat child module
+	-source este un argument obligatoriu in block ul module care contine path ul unde este child module
+	-putea foarte bine ca path ul sa fie absolut (complet), dar in acest exemplu am folosit un path relativ, deoarece din directorul development punem .. si numele acestuia
+	-de exemplu vrem sa dam deploy la un app in mai multe regiuni, asa ca ne folosim de primul modul
+	-in folderul modules, avem mai multe fisiere de configuratie pt un server web
+	
+	app-server.tf
+	
+	resource "aws_instance" "app-server" {
+		ami 	     = var.ami
+		insance_type = "t2.medium"
+		tags {
+			Name = "${var.app_region}-app-server"
+		}
+		depends_on = [aws_dynamodb_table.payroll_db,
+					  aws_s3_bucket.payroll_data
+					 ]
+	}
+	
+	s3_bucket.tf
+	
+	resource "aws_s3_bucket" "payroll_data" {
+		bucket = "${var.app_region}-${var.bucket}"
+	}
+	
+	dynamo_table.tf
+	
+	resource "aws_dynamodb_table" "payroll_db" {
+		name = "user_data"
+		billing_mode = "PAY_PER_REQUEST"
+		hash_key     = "EmployeeID"
+		
+		attribute {
+			name = "EmployeeID"
+			type = "N"
+		}
+	}
+	
+	variables.tf
+	
+	variable "app_region" {
+		type = string
+	}
+	variable "bucket" {
+		default = "flexit-payroll-alpha-22001c"
+	}
+	variable "ami" {
+		type = string	//ami si app_region le lasam doar cu tipul deoarece sunt unice pt fiecare regiune si le vom specifica in celelalte module
+	}
+	
+	-mai facem un folder numit us-payroll-app in care facem 2 fisiere care vor folosi primul modul creeat de noi
+	
+	main.tf
+	
+	module "us_payroll" {
+		source     = "../modules/payroll-app"
+		app_region = "us-east-1"
+		ami		   = "ami-24e140119877avm"
+	}
+	
+	-acum folderul modules va fi folosit ca sursa si va fi child module, daca dam apply in fodlerul curent
+	-atributele carora trebuie sa le dam valori neaparat din configuratia main.tf sunt app region si ami 
+	-putem, de asemenea, optional, sa specificam o valoare pt argumentul bucket, dar daca nu facem asta, va lua o valoarea default specificata in configuratia anterioara
+	-nu vream ca instance type, dynamodb name, primary key sa fie schimbate, de aceea le am hardcodat
+	-doar cu acest module block, configuratia noastra este completa si gata sa fie aplicata
+	-daca dam terraform apply, vom vedea ca atributele dynamodb table name, primary key si instance type iau valorile pe care le am definit in child module
+	-dar ami si bucket name vor folosi valorile pe care le am definit in root module(bucket name va folosi in denumirea sa var_region pe care am definit o in root module iar ami va folosi valoarea pe care am definit o pt ami in main.tf)
+	
+	-pt a da deploy la acelasi app dar in regiunea uk, vom facem alt folder uk-payroll-app
+	-vom scrie alt main.tf pt uk cu acelasi module block folosit anterior, dar cu valorile speicifice pt eu-west-2
+	
+	main.tf
+	
+	module "uk_payroll" {
+		source     = "../modules/payroll-app"
+		app_region = "eu-west-2"
+		ami		   = "ami-35e140119877avm"
+	}
+	
+	-daca dam terraform apply acum, se va creea aceeasi aplicatie in anglia 
+	-bucket ul creeat acuma are prefix ul de eu west 2
+	-aceste module sunt comparabile cu librariile in limbajele de programare, vom avea configuratii mult mai simple si mai modulare si usor de inteles
+	
+Terraform Modules from the Registry
+
+	-modulul descris anterior este local module
+	-le avem si pe cele oficiale de la haschicorp pe care le putem folosi, acestea sunt documentate si au bifa in dreptul numelui, dar le avem si pe cele neoficiale puse de useri si nevalidate de haschicorp
+	-de exemplu pt a creea un security group care perminte inbound ssh, putem creea o configuratie cu sub-modulul ssh asa(ssh este submodulul modulului security group):
+	-are nevoie de 3 argumente obligatorii: numele security group ului(name), vpc ul pt a-l creea (vpc_id) si ingress_cidr_blocks care accepta o lista de ip uri din care este permis ssh-ul
+	
+	main.tf
+	
+	module "security_group_ssh" {
+		source = "terraform-aws-modules/security-group/aws/modules/ssh" 
+		version = "3.16.0"
+		# insert the 2 required variables here
+		vpc_id = "vpc-7d8d215"
+		ingress_cidr_blocks = [ "10.10.0.0/16"]
+		name = "ssh-access"
+	}
+	
+	-pt a folosi modulul, putem rula terraform init sau daca plug in urile providerului au fost deja descarcate in folderul de configurare, putem rula direct terraform get care doar va descarca modulul din registry 
+	-e o idee buna sa specificam versiunea modulului, deoarece pot fi multe revizii care sunt facute fiecarui modul in timp
+	-daca nu specificam versiunea, va downloada mereu ultimele versiuni ale modulului din registry
+	-asta poate sa fi intordus schimbari in felul in care merge, ceea ce nu ar fi mereu de dorit
+	-pt a creea acest security group folosim acest modul putem rula terraform plan si dupa apply 
+	
+	Lab:
+	
+	https://registry.terraform.io/namespaces/terraform-aws-modules
+	-aici gasim toate modulele aws cu exemple si argumentele obligatorii
+	-la inputs vedem ce se creeaza by default cand creeam o resursa cu apply, vedem la default pus true
+	-putem seta pe false creerea acestor resurse ca si argumente default in block ul modulului astfel:
+	
+	main.tf
+	
+	module "iam_iam-user" {
+	  source  = "terraform-aws-modules/iam/aws//modules/iam-user"
+	  version = "5.28.0"
+	  # insert the 1 required variable here
+	  name = "max"
+	  create_iam_access_key = false
+	  create_iam_user_login_profile	= false
+	}
+	
+	variables.tf
+	
+	variable "region" {
+		default = "us-east-1"
+	}
+	
+	providers.tf
+	
+	terraform {
+	  required_providers {
+		aws = {
+		  source = "hashicorp/aws"
+		  version = "5.11.0"
+		}
+	  }
+	}
+
+	provider "aws" {
+	  region                      = var.region
+	  skip_credentials_validation = true
+	  skip_requesting_account_id  = true
+	  endpoints {
+		iam = "http://aws:4566"
+		ec2 = "http://aws:4566"
+		s3 = "http://aws:4566"
+	  }
+	}
+	
+	
+More Terraform Functions
+
+	-pana acuma am folosit cateva functii terraform ca de exemplue file(), length(), toset() , de ex:
+	
+	main.tf
+	
+	resource "aws_iam_policy" "adminUser" {
+		name   = "AdminUsers"
+		policy = file("admin-policy.json")		// va pune in argumentul policy continutul file ului specificat intre ""
+	}
+	
+	resource "local_file" "pet" {
+		filename = var.filename
+		count = length(var.filename) //lungimea lui var.filename care e un nume de fisier
+	}
+	
+	main.tf
+	
+	resource "local_file" "pet" {
+		filename = var.filename
+		for_each = toset(var.region)	//adaugam in for each toate numele neduplicate din lista din variablia region, facand o set
+	}									//mai departea puteam sa folosim each.value pt a prelua valorile din for each si a le pune intr un atribut ca de ex regions = each.value
+	
+	variable region {
+		type 	    = list
+		default 	= ["us-east-1",
+					   "us-east-1",
+					   "ca-central-1"]
+		description = "A list of AWS Regions"
+	}
+	
+	-pana acuma ma folosit functii doar in fisiere de config, fara a vedea ce se intampla defapt cand se executa acele functii
+	-din fericire, exista o consola terraform interactiva unde putem testa functii si interpolari
+	-pt a intra in aceasta consola, in terminal dam comanda: $ terraform console
+	-de exemplu daca dam comanda in consola: > file("/root/terraform-projects/main.tf")	, comanda ne va afisa continutul 
+	-comanda: > length(var.region)  		, ne va afisa cate elemente sunt in lista din variable region, adica 3
+	-comanda: > toset(var.region)		, ne va afisa doar doua elemente din cele 3 pe care le face set, deoarece doua erau duplicate si un set nu poate avea valori duplicate, deci aceeasi variablia din list o face set si sterde duplicatele
+	
+					  ["us-east-1",
+					   "ca-central-1",
+					   
+					  ]
+	-functiile terraform sunt de mai multe categorii:
+	Numeric Functions, String Functions, Collection Functions, Type Conversion Functions
+	-functiile numerice sunt folosite pt a manipula si transforma numere, de ex in tf console:
+	max(-1, 2, -10, 200, -250)	=> 200
+	min(-1, 2, -10, 200, -250)  => -250
+	
+	-ca sa folosim aceste functii cu valori de variabile trb alta sintaxa
+	
+	variables.tf
+	
+	variable "num" {
+		type        = set(number)
+		default     = [ 250, 10, 11, 5]
+		description = "A set of numbers"
+	}
+	
+	> max(var.num...)		=> 250
+	
+	-avem functia ceil() care aproximeaza un numar cu virgula la cel mai mare numar intreg sau urmatorul care este, de ex:
+	> ceil(10.1)  => 11
+	> ceil(10.9)  => 11
+	
+	-pe de lata parte, avem functia care functioneaza fix invers numita floor() care aproximeaza la cel mai mic numar intreg posibil care vine inaintea nr actual
+	
+	> floor(10.1)  => 10
+	> floor(10.9)  => 10
+	
+	-functiile string manipuleaza si transflorma string uri , de ex:
+	-split("sep", "string")   va separa in sub string uri puse intr-o lista un string separat prin separatori gen , . sau spatiu
+	-lower("string")	ca param poate fi si var.ami care e un string. Functia va face toate literele mici
+	-upper("string")	ca param poate fi si var.ami care e un string. Functia va face toate literele mari
+	-title("string")    ca param poate fi si var.ami care e un string. Functia va face litera mare prima litera a fiecarui cuvant din string
+	-substr("string", pozitia index de la care sa inceapa, nr de pozitii pana unde sa mearga)
+		-functia substr e folosita pt a extrage un substring dintr un string
+		-in alte cuvinte va taia un string intr un string mai mic folosind un offset si un length
+	-join("sep", "list of strings")  ca param avem separatoru si lista de string uri pe care sa le uneasca intr un singur string despartite prin separator
+	-length("List of strings")	ca param putem avea un string si ne va da lungimea lui sau o lista de string uri si ne va da numarul acesteia de elemente
+	-index("List of strings", "string")  ca param avem o lista de string uri si un string pe care il va cauta in aceasta lista si ne va da index ul acestuia daca exista
+	-element("List of strings", "index")  ca param avem o lista de string uri si un index, fct va returna elementul de la index ul respectiv
+	-contains("List of strings", "string")  ca param avem o lista de string uri si un string pe care il va cauta in lista si va da true daca il gaseste sau false daca nu
+	-keys("map")   va returna toate cheile dintr un map unde avem elemente de genu cheie - vloare
+	-values("map")  va returna toate valorile dintr un map
+	-lookup("map", "key")  va returna valoarea pt cheia data ca parementru din map ul nostru
+	
+	variables.tf
+	
+	variable "ami" {
+		type        = string
+		default     = "ami-xyz,AMI-ABC,ami-efg"
+		description = "A string containing ami ids"
+	}
+	
+	$ terraform console
+	
+	> split(",", "ami-xyz,AMI-ADC,ami-efg")
+	[ "ami-xyz","AMI-ABC","ami-efg" ]
+	
+	> split(",", var.ami)
+	[ "ami-xyz","AMI-ABC","ami-efg" ]
+	
+	> lower(var.ami)
+	ami-xyz,ami-abc,ami-efg
+	
+	> upper(var.ami)
+	AMI-XYZ,AMI-ABC,AMI-EFG
+	
+	> title(var.ami)
+	Ami-Xyz,AMI-ABC,Ami-Efg 	// ami-xyz,AMI-ABC,ami-efg stringul original
+	
+	> substr(var.ami, 0, 7)		// ami-xyz,AMI-ABC,ami-efg va scoate substring ul incepand de la pozitia 0(a). Adica numaram de la index ul 0, 7 pozitii, care este lungimea substring ului pe care il va scoate 
+	ami-xyz						// va extrage incepand de la indexul 0 pana la index-ul 6, adica 7 pozitii efectiv, in cazu asta la pozitia 7 se afla virgula ,
+	
+	> substr(var.ami, 8, 7)		// va extrage incepand cu pozitia 8, adica fix prima litera de dupa virgula(A), deci noul substring va avea un length de 7, adica pana la ultima litera de dinainte de virgula
+	AMI-ABC
+	
+	> substr(var.ami, 16, 7)	// va extrage incepand cu pozitia 8, adica fix prima litera de dupa virgula(a), deci noul substring va avea un length de 7, adica pana la ultima litera de dinainte de virgula
+	ami-efg						// cu alte cuvinte, gasim index-ul 16 incepand numaratoarea de la 0 in string ul nostru de la var.ami, si numaram efectiv 7 pozitii(lungimea substring ului) de la acest index indepand numaratoarea de la 1
+	
+	-join()
+	
+	variables.tf
+	
+	variable "ami" {
+		type        = list
+		default     = ["ami-xyz", "AMI-ABC", "ami-efg"]
+		description = "A list of strings"
+	}
+	
+	$ terraform console
+	> join(",", var.ami)		// efectiv uneste string urile din lista data ca param despartite de separaturul ,
+	ami-xyz,AMI-ABC,ami-efg
+	
+	-index(), element(), cotains()
+	
+	> length(var.ami)
+	3					// va returna numarul de elemente al listei de string uri sau lungimea unui string daca dam ca paramentru un simplu string
+	
+	> index(var.ami, "AMI-ABC")
+    1             		// va returna indexul la care se afla elementul dat ca si al doilea parametru, adica al doilea elem din lista ca is numerotate de la 0
+	
+	> element(var.ami, 2)   
+	ami-efg			    // va returna elementul din lista aflat la indexul 2(al doilea parametru) adica al treilea elem din lista ca is numerotate de la 0
+	
+	> contains(var.ami, "AMI-ABC")
+	true				// va returna true daca se gaseste in lista al doilea param si false daca nu
+	
+	> contains(var.ami, "AMI-XYZ)
+	false				// va returna false deoarece elementul acesta nu se gasete in lista, este unul asemanator cu toate literele mici, dar functia contains() este case sensitive, deci trebuie sa fie exact aceleasi litere mari sau mici ca sa dea true
+	
+	map functions
+	
+	variables. tf
+	
+	variable "ami" {
+		type 	= map
+		default = { "us-east-1" = "ami-xyz",
+					"ca-central-1" = "ami-efg",
+					"ap-south-1" = "ami-ABC"
+		}
+		description = "A map of AMI ID's for specific regions"
+	}
+	
+	$ terraform console
+	> keys(var.ami)		// va returna toate cheile din map-ul nostru, puse intr o lista, din variabila ami dat ca si parametru
+	[
+	  "ap-south-1",
+	  "ca-central-1", 
+	  "us-east-1",
+	]
+	
+	> values(var.ami)	// va returna toate valorile din map-ul nostru, puse intr o lista, nostru dat ca parametru
+	[
+	  "ami-ABC",
+	  "ami-efg", 
+	  "ami-xyz",
+	]
+	
+	> lookup(vari.ami, "ca-central-1")	// va returna valoarea unei chei specifice, pe care i-o dam ca parametru, din map-ul nostru 
+	ami-efg								// daca cheia pe care o dam ca parametru nu exista in map, va da eroare
+	
+	-optional putem da si un al treilea parametru functiei, care este valoarea default care va fi returnata in caz ca cheia din al doilea argument nu exista in map
+	
+	> lookup(var.ami, "us-west-2", "ami-pqr")
+	ami-pqr			// in acest caz, functia va returna valoarea ami-pqr chiar daca cheia us-west-2 nu exista in map si ar fi trebuit sa dea eroare in mod normal, noi am suplinit valoarea default care sa o returneze functia cand nu gaseste cheia specificata in map
+	
+	
+Operators & Conditional Expressions
+
+	-consola terraform suport si operatii aritmetice(1+2) operatori logici, de egalitate si de comparatie(8 ==8 true, 8 != "8" true, 5 > 4 true, 8 > 7 && 8 < 10 true, 8 < 7 && 8 < 10 false, 8 < 7 || 8 < 10 true)
+	
+	variables.tf
+	
+	variable special {
+		type	= bool
+		default = true
+		description = "Set to true to use special characters"
+	}
+	
+	variable a {
+		type    = number
+		default = 50
+	}
+	
+	variable b {
+		type    = number
+		default = 25
+	}
+	
+	terraform console
+	> var.special 
+	true
+	> !var.special
+	false
+	> ! (var.b > 30)
+	true
+	> var.a > var.b 
+	true
+	> var.a + var.b 
+	75
+	
+	-sa folosim asta in terraform. Sa zicem ca vrem sa asignam o variabila unui argument in fucntie de o conditie
+	-sa zicem ca vrem sa generam o parola si ne folosim de random_password provider, care va genera o parola random cu un argument specificat de user numit length
+	-pt a printa parola generata pe ecram ne folosim de un output variable numit password
+	-creeam si un variable numit length caruia ii dam doar type si description fara a specifica valoarea default a acesteia, ii vom da valoarea direcet din linia de comanda cand dam apply
+	-dar vrem si ca terraform sa accepte o valoare pt length doar daca este cel putin de 8 caractere lungime
+	
+	main.tf
+	
+	resource "random_password" "password-generator" {
+		length = var.length
+	}
+	
+	output password {
+		value = random_password.password-generator.result
+	}
+	
+	variables.tf
+	
+	variable length {
+		type		= number
+		description = "The length og the password"
+	}
+	
+	$ terraform apply  -var=length=5 -auto-approve
+	...
+	passowrd = sjsrW]
+	
+	-deocamdata, comanda de mai sus ne va lasa sa generam o parola de lungime 5
+	-cu ajutorul unui script ce poate fi rulat in linia de comanda putem pune conditia ca lungimea parolei sa fie cel putin 8 si daca nu este sa o facem noi 8, iar daca este peste 8 sa o lasam asa
+	
+	$ if [ $length -lt 8 ]	//lower than 8
+		then
+			length=8;
+			echo $length;
+		else
+			echo $length;
+		fi
+	#Generate password
+	
+	-putem face acelasi lucru inline folosind conditional expression: condition ? true_val : false_val
+	-updatam main.tf astfel incat sa generam o parola de cel putin 8 caractere:
+	
+	main.tf
+	
+	resource "random_password" "password-generator" {
+		length = var.length < 8 ? 8 : var.length
+	}	
+	
+	-conditia este daca valoarea variabilei length este mai mica decat 8, daca este, vol folosi 8 in locul acesteia, altfel daca e mai mare ca 8, o vom folosi pe ea insasi
+	-acum daca dam comanda de mai devreme: 	$ terraform apply  -var=length=5 -auto-approve, parola generata va fi de 8 char long nu de 5
+	-daca dam o valoare mai mare decat 8, terraform accepta valoarea si modifica resursa: 	$ terraform apply  -var=length=12 -auto-approve
+	
+	Lab
+	
+	variables.tf
+	
+	variable "region" {
+	  default = "ca-central-1"
+	}
+	variable "cloud_users" {
+		 type = string
+		 default = "andrew:ken:faraz:mutsumi:peter:steve:braja"
+	  
+	}
+	variable "bucket" {
+	  default = "sonic-media"
+	  
+	}
+
+	variable "media" {
+	  type = set(string)
+	  default = [ 
+		"/media/tails.jpg",
+		"/media/eggman.jpg",
+		"/media/ultrasonic.jpg",
+		"/media/knuckles.jpg",
+		"/media/shadow.jpg",
+		  ]
+	  
+	}
+	variable "sf" {
+	  type = list
+	  default = [
+		"ryu",
+		"ken",
+		"akuma",
+		"seth",
+		"zangief",
+		"poison",
+		"gen",
+		"oni",
+		"thawk",
+		"fang",
+		"rashid",
+		"birdie",
+		"sagat",
+		"bison",
+		"cammy",
+		"chun-li",
+		"balrog",
+		"cody",
+		"rolento",
+		"ibuki"
+
+	  ]
+	}
+	
+	$ terraform console
+	> index(var.sf, "oni")   => 7
+	
+	main.tf
+	
+	resource "aws_iam_user" "cloud" {
+	  name = split(":", var.cloud_users)[count.index]	// variabila cloud_users este un string pe care il split uim intr o lista pe care o parcurgem cu un index de length-ul acesteia
+	  count = length(split(":", var.cloud_users))
+	}
+	resource "aws_s3_bucket" "sonic_media" {
+		 bucket = var.bucket
+	}
+	resource "aws_s3_object" "upload_sonic_media" {
+		for_each = var.media
+		bucket = aws_s3_bucket.sonic_media.id
+		source = each.value
+		key = substr(each.value, 7, 14)
+	}
+	
+	-pt a creea un bucket si a uploada obiecte in el vom proceda astfel:
+		-creeam o resursa aws_s3_bucket careia ii dam numele din variabila bucket
+		-creeam o resursa aws_s3_object , in care:
+		-numele bucket ului i-l dam folosind referinta la reursa creeata anterior
+		-intr un for_each vom lua toate elementele listei din variabila media care sunt path uri catre niste poze
+		-ca si sursa vom folosi valorile din for_each cu each.value
+		-si ca si key pt fiecare obiect vom folosi tot valorile path urilor din for_each dar fara /root care in cazu nostru este /media cu ajutorul comenzii substring
+	
+	-Alt ex de configurare pt o instanta ec2
+	
+	variables.tf
+	
+	variable "region" {
+		default = "us-east-1"
+	}
+	variable  "name" {
+		type = string
+	}
+	variable "ami" {
+		type = string
+		default = "ami-09331245601cf"
+	}
+	variable "small" {
+		type = string
+		default = "t2.nano"
+	}
+	variable "large" {
+		type = string
+		default = "t2.2xlarge"
+	}
+	
+	main.tf
+	
+	resource "aws_instance" "mario_servers" {
+		ami = var.ami
+		tags = {
+			Name = var.name        
+		}
+		instance_type = var.name == "tiny" ? var.small : var.large
+	}
+	
+	-vom folosi pt ami valoarea variabilei ami
+	-pt Name din tags vom folosi variabila name care nu are valoare default, dar i-o vom da din linia de comanda cand dam apply
+	-pt instance_type vom pune conditia in functie de tag-ul Name care are valoarea var.name
+	-deci in functie de var.name daca are valoarea din linia de comanda "tiny", instance_type va fi var.small, altfel va fi var.large
+	
+Terraform Workspaces (OSS)
+	
+	-de exemplu avem o configuratie terraform pt o instanta aws ec2 in folderul terraform-projects/projectA
+	-daca dam terraform apply, va creea instanta cum era de asteptat si un terraform state file
+	-sa zicem ca vrem sa replicam instanta cu alt nume de resursa si alt ami id, dar nu vrem sa copiem codul din nou si sa il modificam, frem sa il refolosim pe cel initial ca si in cauzul folosirii modulelor
+	-asadar, terraform ofera un feature care permite fisierelor de configurare dintr un folder sa fie refolosite de mai multe ori pt diferite usecase uri
+	-ca de exemplu, sa creeam un projectA si projectB environment in acelasi folder, acest feature se numeste workspace
+	-cu workspace uri putem folosi acealasi folder de configurare pt a creea multiple environment uri de infrastructura ca si projectA si projectB 
+	-pt a creea un workspace, folosim comanda:
+	
+	$ terraform workspace new ProjectA (comanda principala e workspace si subcomanda e new urmata de numele ProjectA)	
+	
+	-dupa ce rulam comanda se va creea workspace ul si terraform va da switch in el automat 
+	-pt a afisa workspace ul creat, folosim coamnda: 
+	
+	$ terraform workspace list 
+	
+	-in cazul de fata, va printa 2 workspace uri: cel default care este creat by default si * ProjectA, steluta inseamna ca suntem pe acest workspace acum
+	-acum sa creeam doua instante folosim workspace urile facute(mai facem unul numit ProjectB), fara a duplica fisierele de configurare
+	-vrem sa creeam 2 insante ec2 pt 2 proiecte in regiunea ca-central-1: ProjectA cu ami ul care se termina in 279 si ProjectB cu ami ul care se termina in f4d
+	-pt asta modificam main.tf ul initial, prin a-i scoate atributele hardcodate si a le inlocui cu variabile 
+	-la tags la atributul Name trebe sa ii dam numele workspace ului in care suntem acum
+	-pt a face asta, folosim comanda: terraform.workspace  , care ne da numele workspace ului in care suntem acum
+	-pt a seta id ul din configuration file ul nostru, folosim functia invatata anterior numita lookup(var.ami, terraform.workspace)
+	-var.ami este map ul nostru definit in variabila ami, iar terraform workspace ne va returna key ul caruia ii cautam value-ul
+	
+	> lookup(var.ami, terraform.workspace)	 //cauta in map ul din variabila ami cheia cu numele ProjectA si ne returneaza valoarea acesteia
+	ami-0edab43b6fa892279
+	-ii punem comanda asta argumentului ami din main.tf
+	-acum configuratia noastra este completa, daca dam tf plan ne va aparea ca foloseste ami ul dorit si tag ul pt a creea instanta in workspace numita ProjectA
+	-pt a creea o noua instanta corespondenta pt ProjectB, tot ce trebuie sa facem e sa creeam un nou workspace numit ProjectB, folosind comanda terraform:
+	
+	> terraform workspace new ProjectB
+	
+	-asta creeaza un nou workspace si da switch in el, daca dam comanda terraform plan vom vedea ca ami id ul si tagul Name pt projectB sunt aplciate 
+	-pt a da switch dintr un workspace in altul putem folosi comanda workspace select, de ex suntem in ProjectB si ca sa dam switch in ProjectA, putem rula comanda select asa:
+	
+	> terraform workspace select ProjectA
+	
+	-acum am folosit cu succces aceeasi configuration file(main.tf si cariables.tf) pt a creea resurse pt doua proiecte diferite
+	-cam dam run la terraform apply, creeaza doua state file uri diferite pt fiecare workspace 
+	-cand folosim workspace uri, terraform in loc sa foloseasca default-ul terraform.tfstate file in folderul de configurare, terraform pune state file ul intr-un folder separat numit terraform.tfstate.d
+	-in acest folder mai sunt doua foldere cu numele workspace urilor creeate care acestea contin terraform.tfstate file urile fiecaruia dintre workspace urile la care am dat terraform apply 
+	
+	
+	main.tf		//acesta si variables.tf sunt deasupra folderelor ProjectA si ProjectB
+	
+		resource "aws_instance" "projectA" {
+		ami = lookup(var.ami, terraform.workspace)
+		instance_type = var.instance_type 
+		tags = {
+			Name = terraform.workspace			// o putem testa si in terraform console 				      
+		}
+	}
+	
+	variables.tf
+	
+	variable instance_type {
+		default = "ca-central-1"
+	}
+	variable ami {
+		type	= map
+		default = {
+			"ProjectA" = "ami-0edab43b6fa892279",
+			"ProjectB" = "ami-0c2f25c1f66a1ff4d"
+		}
+	}
+	
+	Lab:
+	
+	-in folderul terraform-projects/project-sapphire creeam 3 workspace uri cu numele us-payroll, uk-payroll, india-payroll cu comenzile $ terraform workspace new us-payroll...
+	-dam switch la workspace ul us-payroll:	$ terraform workspace select us-payroll
+	-pt a ne verifica dam sa afiseze workspace urile si cel curent in dreptul la * : $ terraform workspace list
+	-state fileurile fiecarui workspace se vor creea in folderul terraform-tfstate.d/<numele_workspaceului>
+	-ca sa folosim o configuratie aflata in alt folder creeam un modul in main.tf
+	-ca sa creeam resursele efectiv, intram in toate workspace urile si dam apply
+	
+	
+	
+	variables.tf
+	
+	variable "region" {
+		type = map
+		default = {
+			"us-payroll" = "us-east-1"
+			"uk-payroll" = "eu-west-2"
+			"india-payroll" = "ap-south-1"
+		}
+
+	}
+	variable "ami" {
+		type = map
+		default = {
+			"us-payroll" = "ami-24e140119877avm"
+			"uk-payroll" = "ami-35e140119877avm"
+			"india-payroll" = "ami-55140119877avm"
+		}
+	}
+	
+	main.tf
+	
+	module "payroll_app" {
+		source     = "/root/terraform-projects/modules/payroll-app"
+		app_region = lookup(var.region, terraform.workspace)
+		ami        = lookup(var.ami, terraform.workspace)
+	} 
+	
+	
+	
+Teraafrom config for deploying ec2 instance in custom vpc 
+
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+# ✅ Create a VPC
+resource "aws_vpc" "my_vpc" {
+  cidr_block = "10.0.0.0/16"
+  enable_dns_support = true
+  enable_dns_hostnames = true
+
+  tags = { Name = "MyVPC" }
+}
+
+# ✅ Create a Public Subnet
+resource "aws_subnet" "public_subnet" {
+  vpc_id                  = aws_vpc.my_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true  # ✅ Auto-assign public IPs
+  availability_zone       = "us-east-1a"
+
+  tags = { Name = "Public Subnet" }
+}
+
+# ✅ Create a Private Subnet
+resource "aws_subnet" "private_subnet" {
+  vpc_id            = aws_vpc.my_vpc.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "us-east-1a"
+
+  tags = { Name = "Private Subnet" }
+}
+
+# ✅ Create an Internet Gateway for Public Subnet
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.my_vpc.id
+  tags = { Name = "MyIGW" }
+}
+
+# ✅ Create a Route Table for Public Subnet
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.my_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"   # Allow all internet traffic
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = { Name = "Public Route Table" }
+}
+
+# ✅ Associate Route Table with Public Subnet
+resource "aws_route_table_association" "public_assoc" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# ✅ Create a NAT Gateway for Private Subnet (so it can reach the internet)
+resource "aws_eip" "nat_eip" {
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_subnet.id  # NAT must be in a public subnet
+
+  tags = { Name = "NAT Gateway" }
+}
+
+# ✅ Create a Route Table for Private Subnet (routes traffic via NAT)
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.my_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"   # Allow outbound internet via NAT
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+
+  tags = { Name = "Private Route Table" }
+}
+
+# ✅ Associate Route Table with Private Subnet
+resource "aws_route_table_association" "private_assoc" {
+  subnet_id      = aws_subnet.private_subnet.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+# ✅ Deploy an EC2 Instance in the Public Subnet
+resource "aws_instance" "public_ec2" {
+  ami           = "ami-08b1d20c6a69a7100"
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public_subnet.id
+  associate_public_ip_address = true  # ✅ Public IP
+
+  tags = { Name = "Public-EC2" }
+}
+
+# ✅ Deploy an EC2 Instance in the Private Subnet
+resource "aws_instance" "private_ec2" {
+  ami           = "ami-08b1d20c6a69a7100"
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.private_subnet.id
+  associate_public_ip_address = false  # ❌ No public IP (it's private)
+
+  tags = { Name = "Private-EC2" }
+}
+
+
+Security groups for pyublic and private subnets within the VPC 
+
+# ✅ Public EC2 Security Group
+resource "aws_security_group" "public_sg" {
+  vpc_id = aws_vpc.my_vpc.id
+
+  # Allow SSH only from YOUR IP
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["YOUR_IP/32"]  # Replace YOUR_IP with your actual IP
+  }
+
+  # Allow HTTP and HTTPS from anywhere
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "Public-EC2-SG" }
+}
+
+# ✅ Private EC2 Security Group
+resource "aws_security_group" "private_sg" {
+  vpc_id = aws_vpc.my_vpc.id
+
+  # Allow SSH only from Public EC2 (bastion host)
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    security_groups = [aws_security_group.public_sg.id]  # Only allow SSH from Public EC2
+  }
+
+  # Allow PostgreSQL (or other services) from the Public EC2
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    security_groups = [aws_security_group.public_sg.id]
+  }
+
+  # Allow all outbound traffic (to access the internet via NAT Gateway)
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "Private-EC2-SG" }
+}
+
+# ✅ Attach SGs to EC2 Instances
+resource "aws_instance" "public_ec2" {
+  ami           = "ami-08b1d20c6a69a7100"
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.public_subnet.id
+  associate_public_ip_address = true
+  security_groups = [aws_security_group.public_sg.id]
+
+  tags = { Name = "Public-EC2" }
+}
+
+resource "aws_instance" "private_ec2" {
+  ami           = "ami-08b1d20c6a69a7100"
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.private_subnet.id
+  associate_public_ip_address = false
+  security_groups = [aws_security_group.private_sg.id]
+
+  tags = { Name = "Private-EC2" }
+}
+	
+Aplication Load Balancer ALB 
+
+# Create Application Load Balancer
+resource "aws_lb" "web_lb" {
+  name               = "web-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.web_sg.id]
+  subnets            = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+
+  enable_deletion_protection = false
+  idle_timeout               = 60
+}
+
+# Create a target group for the web instances
+resource "aws_lb_target_group" "web_target_group" {
+  name     = "web-target-group"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+
+  health_check {
+    path                = "/health"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+  }
+}
+
+# Create a listener for the ALB
+resource "aws_lb_listener" "web_listener" {
+  load_balancer_arn = aws_lb.web_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_target_group.arn
+  }
+}
+	
+Terraform config for aplication load balancer(ALB) rout table security groups vpc for ec2 instances both public and private 
+
+# VPC and Subnets
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+resource "aws_subnet" "public_subnet" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "us-east-1a"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "private_subnet" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "us-east-1b"
+}
+
+# Internet Gateway for Public Subnet
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+}
+
+# NAT Gateway for Private Subnet (requires Elastic IP)
+resource "aws_eip" "nat_eip" {
+  vpc = true
+}
+
+resource "aws_nat_gateway" "nat_gw" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_subnet.id
+}
+
+# Route Tables for Subnets
+resource "aws_route_table" "public_route_table" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route" "default_public_route" {
+  route_table_id         = aws_route_table.public_route_table.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.igw.id
+}
+
+resource "aws_route_table_association" "public_subnet_association" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.public_route_table.id
+}
+
+resource "aws_route_table" "private_route_table" {
+  vpc_id = aws_vpc.main.id
+}
+
+resource "aws_route" "private_nat_route" {
+  route_table_id         = aws_route_table.private_route_table.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat_gw.id
+}
+
+resource "aws_route_table_association" "private_subnet_association" {
+  subnet_id      = aws_subnet.private_subnet.id
+  route_table_id = aws_route_table.private_route_table.id
+}
+
+# Application Load Balancer
+resource "aws_lb" "main" {
+  name               = "main-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.lb_sg.id]
+  subnets            = [aws_subnet.public_subnet.id]
+}
+
+# Target Group
+resource "aws_lb_target_group" "main_target_group" {
+  name     = "main-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+}
+
+# Security Groups for Load Balancer and EC2 Instances
+resource "aws_security_group" "lb_sg" {
+  name        = "lb_sg"
+  description = "Allow HTTP traffic"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group" "ec2_sg" {
+  name        = "ec2_sg"
+  description = "Allow HTTP and SSH traffic"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# EC2 Instances in Public and Private Subnets
+resource "aws_instance" "public_ec2" {
+  ami           = "ami-0c55b159cbfafe1f0" # Example AMI
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.public_subnet.id
+  security_group = aws_security_group.ec2_sg.id
+  associate_public_ip_address = true
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo apt-get update
+              sudo apt-get install -y apache2
+              EOF
+}
+
+resource "aws_instance" "private_ec2" {
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.private_subnet.id
+  security_group = aws_security_group.ec2_sg.id
+  associate_public_ip_address = false
+}
+
+# Register EC2 Instances in Target Group
+resource "aws_lb_target_group_attachment" "public_ec2_attachment" {
+  target_group_arn = aws_lb_target_group.main_target_group.arn
+  target_id        = aws_instance.public_ec2.id
+  port             = 80
+}
+
+resource "aws_lb_target_group_attachment" "private_ec2_attachment" {
+  target_group_arn = aws_lb_target_group.main_target_group.arn
+  target_id        = aws_instance.private_ec2.id
+  port             = 80
+}
+
+	
+Terraform config for EKS kubernetes load balancer with amazon 
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_eks_cluster" "example" {
+  name     = "example-cluster"
+  role_arn = "arn:aws:iam::123456789012:role/eks-cluster-role"
+
+  vpc_config {
+    subnet_ids = ["subnet-xyz", "subnet-abc"]
+  }
+}
+
+resource "aws_eks_node_group" "example_node_group" {
+  cluster_name    = aws_eks_cluster.example.name
+  node_group_name = "example-node-group"
+  node_role_arn   = "arn:aws:iam::123456789012:role/eks-node-role"
+  subnet_ids      = ["subnet-xyz", "subnet-abc"]
+  scaling_config {
+    desired_size = 2
+    max_size     = 3
+    min_size     = 1
+  }
+}
+	
+	
+	
+	
+	

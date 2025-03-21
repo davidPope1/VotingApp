@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myapp-replicaset
+  labels:
+    app: myapp 
+#    type: frontend 
+spec:
+  selector:
+    matchLabels:
+      app: myapp    # punem labelu folosit si la podu nginx.yaml
+  replicas: 3
+  template:
+    metadata: 
+      name: nginx
+      labels:
+        app: myapp   # trebuie sa fie la fel cu labelu din selector: cel de sus sus nu cont
+    spec:
+      containers:
+      - name: nginx 
+        image: nginx 
+

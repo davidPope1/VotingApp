@@ -1,0 +1,1978 @@
+Doker
+
+Basic Doker Commands
+
+	> doker run ngnix
+	
+	-da pull de pe docker hub la imaginea ngnix daca este prima data cand folosim comanda run cu imaginea respectiva si porneste un container dintr o imagine specificata de noi
+	-daca de exemplu rulam docker run ubuntu containerul ca fi imediat pus pe exited state
+	-daca afisam containerele cu docker ps vom vedea ca nu exista aici si trebuie sa dam comanda cu -a ca sa il vedem
+	-asta s-a intamplat deoarece, spre deosebire de vm uri, containerele nu sunt menite sa dea host la un sistem de operare
+	-containerele sunt menite sa ruleze un task sau un proces anume , de ex sa dea host la o instanta a unui server web, serverului unei aplciatii, o baza de date sau un task de computare sau analiza
+	-odata ce task ul e facut, containerul da exit
+	-containerul e facut sa existe atat timp cat procesul din acesta traieste
+	-daca serviciul web din container e oprit sau isi ia crash, containerul da exit
+	-deoarece ubuntu e doar o imagine a unui sistem de operare care e folosita ca imaginea de baza pt alte aplicatii
+	-nu e niciun proces sau aplicatie care ruleaza in ea by default
+	-daca imaginea nu ruleaza niciun serviciu, ca si in cazul celei ubuntu, putem sa rulam un proces cu comanda docker run
+	
+	> docker run ubuntu sleep 15
+	
+	-in acest exemplu, cand containerul porneste, ruleaza comanda sleep si merge in sleep pt 15 secunde, dupa comanda sleep da exit si containerul se opreste 
+	-asta a fost executarea unei comenzi cand pornim containerul
+	-dar putem executa o comanda pe un container care este deja pornit
+	-de exemplu vrem sa vedem continutul unui fisier(cu path ul /etc/hosts) de pe containerul cu imaginea de ubuntu cu numele distracted_mcclintock, folosim comanda cat:
+	
+	> docker exec distracted_mcclintock cat /etc/hosts
+	
+	
+	> docker run kodekloud/simple-webapp 
+	
+	-dam run la un container care are imaginea un simple web server care asculta pe 8080
+	-cand rulam comanda docker run asa, ruleaza in foreground sau in attached mode, adica o fim atasati la consola de output(standard out) a containerului si vom vedea output ul serviciului web pe ecran
+	-nu vom putea face nimic in consola in afara de a vedea output ul pana cand se orpeste containerul
+	-nu va raspunde la input, dam ctrl + c ca sa oprim containerul si aplicatia hostuita pe container da exit si ne intoarce la prompt ul nostru initial
+	
+	> docker run -d kodekloud/simple-webapp 
+	
+	-alta optiune e sa rulam containerul in modul detasat cu optinea -d
+	-asta va porni containerul docker in backround, ne va da id ul containerului si ne va da inapoi la prompt ul nostru initial direct
+	-containerul va continua sa ruleze in backend
+	-daca rulam docker ps vom vedea running containerul
+	-pentru a ne atasa la container dam comanda: > docker attach a043d (<inceputul id ului cat sa fie diferit de celelalte id uri, nu trebuie dat tot>)
+	
+	> doker ps -a
+	
+	-afiseaza toate containerele care sunt running
+	-daca punem si optiunea -a le afiseaza si pe cele care au fost running dar au fost oprite(exited)
+	-ne afiseaza informatii despre container, ca si: runnign status, id(random), imaginea folsita, numele(random)
+	
+	> docker stop <numele sau id-ul>
+	
+	-opreste un container caruia ii specificam numele sau id ul luate din docker ps 
+	-daca ne afiseaza numele dupa ce dam comanda e bine
+		
+	> docker rm <numele sau id-ul>
+	
+	-sterge un container oprit(trebuie neaparat sa fie oprit sau exited) pe care il speificam noi pt a nu consuma spatiu
+	-daca ne afiseaza numele dupa ce dam comanda e bine
+	-char daca stergem containerul, imaginea de ex ngnix, va ramane
+	
+	> doker images
+	
+	-pt a vedea o lista cu toate imaginile descarcate si size urile lor
+	
+	> docker rmi nginx (<numele imaginii>)
+	
+	-pt a sterge o imagine, pe care nu ruleaza niciun container
+	-trebuie oprite si sterge toate containerele dependente de imaginea respectiva inainte sa incercam sa o stergem
+	
+	> docker pull nginx
+	
+	-pt doar a downloada imaginea ca atunci cand dam run la un container cu imaginea respectiva sa nu mai trebuiasca sa o descarcam atunci, sa fie deja descarcata
+	
+	
+	Lab
+	
+	> docker run centos
+	
+	-comanda e folosita pt a da run la un container dintr-o imagine 
+	-deci trebuie sa specificam si un nume de imagine, pt a afla ce imagini putem folosi, mergem pe site ul docker hub la explore
+	-aici putem vedea multe imagini oficiale default disponibile ca si hello-world
+	-in cazul nostru, folosim centOS, cand rulam comanda va incerca sa o gaseasca initial local si daca nu gaseste, o sa o descarce ultima versiune a imaginii
+	-se va uita in repository ul librariei, care este un docker repository default care are imaginile oficiale
+	-toate imaginile oficiale de la explore ofiicial images pot fi downloadate doar cu numele imaginii respective
+	-daca folosim o imagine privata creeata de noi, trebuie sa ii dam numele asa: docker run -d kodekloud/simple-webapp 
+	-acum, revenind la comanda de mai sus si la prompt, containerul a rulat dar a iesit imediat pt ca nu i am cerut sa faca nimic
+	-imaginea centos este doar o imagine de baza pt sistemul de operare cent os
+	-docker e folosit pt a rula servicii si aplicatii, deci daca vrem sa tinem containerul in viata, trebuie sa rulam ceva 
+	
+	> docker run -it centos bash 
+	
+	-de data asta ii spunem sa ruleze comanda bash si daca vrem sa fim automat logati in containerul docker cand este rulat punem optiunea -it
+	-acum vedem ca ne schimba prompt-ul care va fi root@<id ul unic al containerului>
+	-aici putem da comanda cat /etc/*release* pt a vedea continutul fisierului release care ne zice ca os ul este centOS Linux v7 ... si ca sa iesim rulam comanda exit
+	
+	> docker run -d centos sleep 20
+	
+	-rulam un container cu imaginea centos caruia ii dam comanda sleep 20(va dormi 20 de sec si se va inchide) si folosim optiunea -d (detached) pt a rula in modul detasat(pt a rula in backround) si sa ramanem in prompt-ul nostru initial si ne printeaza id ul containerului	
+	-acum daca rulam repede comanda docker ps , ne va aparea containerul cu id ul imaginea comanda sleep 20 numele, deoarece inca este running pt 20 de sec inainte sa iasa
+	-daca dam iar comanda docker ps dupa 20 de sec nu o sa mai apara ca a dat exit
+	
+	> docker run -d centos sleep 2000
+	
+	-dam comanda pt a porni in backround in container centos care va sta sleep pt 2000 de sec
+	
+	> docker stop 5bd0995
+
+	-pt a opri containerul
+	
+	> docker ps -a
+	
+	-pt a afisa containerele oprite(exited), inclusiv pe cel cu comanda sleep 2000 pe care l am inchis noi manual
+	
+	> docker rm 1619625d7f5a
+	
+	-pt a sterge definitiv containerele oprite, in cazul nostru cel cu id ul luat de la comanda anterioara
+	-daca dam din nou comanda anterioara docker ps -a vom vedea ca a disparut
+	-asta trebuie sa facem sa recuperam spatiu pe disk
+	
+	> docker rm 345 e0a 773 
+	
+	-putem da chiar mai multe id uri in aceeasi comanda de remove pt containere si le va sterge pe toate deodata
+	-rulam comanda docker ps -a si vedem ca toate cele 3 au disparut
+	
+	> docker images
+	
+	-pt a vedea toate imaginile carora le am dat pull(download) pana acuma 
+	
+	> docker rmi busybox
+	> docker rmi ubuntu
+	
+	-pt a sterge imaginile respective, trebuie ca niciun container pe baza lor sa fie running
+	
+	> docker run centos
+	> docker ps -a     	  //vedem containerul exited creeat 
+	> docker rmi centos	  //o sa dea eroare deoarece este un container creeat care are la baza iamginea respectiva
+	> docker rm 8e		  //pt a sterge containerul 
+	> docker ps -a        //pt a ne asigura ca nu mai exista containerul
+	> docker images		  //pt a vedea imaginile
+	> docker rmi centos   //pt a sterge imaginea centos
+	> docker images       //pt a vedea ca imaginea a disparut
+	> docker rmi hello-world   //pt a sterge imaginea hello-world
+	
+	-docker run ubuntu va cauta mai intai imaginea ubuntu local si daca nu o va gasio va merge pe docker hub si o va downloada,, ii va da pull local
+	-daca vrem sa descarcam imaginea, dar nu vrem si sa rulam un docker container pe baza ei putem da doar docker pull ubuntu
+	
+	> docker pull ubuntu	//ii da download la imagine
+	> docker images			//pt a vedea imaginea descarcata local
+	> docker run -d ubuntu sleep 100	//pt a porni un container cu imaginea ubuntu care sa stea asleep 100 de sec si sa ruleze in backround
+	
+	-in timp ce un container este running, ca acesta, putem executa o comanda pe acesta, de ex sa vedem continutul unui fisier anume din containerul respectiv
+	
+	> docker exec cla19d3a7ca7 cat /etc/*release* 
+	
+	-deci practic comanda exec, executa o comanda pe un running container
+	-cand rulam comanda de mai sus, aceasta va rula comanda cat in container si ne va da un output
+	
+	Lab
+	
+	> docker version 
+	
+	-pt a vedea versiunea de docker si multe alte informatii despre server, linux, api
+	
+	> docker run redis
+	
+	-ne baga direct in consola serverului redis, trebuie sa dam ctrl c sa iesim si sa dam exit la container
+	
+	-pt a sterge containere cu docker rm trebuie mai intai sa le oprim cu docker stop
+	-pt a sterge o imagine trb sterse containerele care o au la baza chiar daca sunt exited sau running
+	
+	> docker run -d --name webapp nginx:1.14-alpine
+	
+	-pt a porni un container si a ii da numele webapp folosind imaginea nginx:1.14-alpine, careia i-am dat docker pull nginx:1.14-alpine anterior
+	-punem optinea -d ca sa ruleze in backround si sa nu ne bage in prompt ul containerului direct
+	
+	
+Docker Run
+
+	> docker run redis
+	
+	-va lua ultima versiune a imaginii by default(are tag ul latest)
+	-putem specifica manual versiunea dorita a imaginii
+	
+	> docker run redis:4.0
+	
+	-aici ii dam noi tag ul dorit, pe docker hub putem cauta imaginea si vedea toate tag urile disponibile
+	
+	-sa zicem ca avem un mic prompt app, care ne cere numele si il afiseaza dupa cu welcome:
+	
+	~/prompt-application$: ./app.sh
+	Welcome! Please enter your name: Mumshad	//afiseaza prima parte inafara de nume si ne ia numele ca input
+	
+	Hello and Welcome Mumshad!			//asta afiseaza
+	
+	-daca dockerizam aplicatia asta si ii dam run, nu va astepta dupa input ul nostru, va da print direct la mesaj fara numele nostru, evident
+	
+	> docker run kodekloud/simple-prompt-docker
+	
+	Hello and Welcome !
+	
+	-se intampla asa, deoarece by default, containerul Docker nu primeste standard input, chiar daca esti atasat la consola acestuia, nu poate sa citeasca niciun fel de input de la noi, nu are un terminal din care sa citeasca input uri, ruleaza intr un mod neinteractiv
+	-daca vrem sa dam input uri, trebuie sa mapam standard input ul host ului nostru la containerul docker, folosind optinea -i
+	-parametrul -i este pt modul interactiv si cand scriem numele nostru ca input ne da output ul asteptat
+	
+	> docker run -i kodekloud/simple-prompt-docker
+	Mumshad
+	
+	Hello and Welcome Mumshad!
+	
+	-cand am rulat prima oara aplicatia ne-a cerut numele explicit, acuma doar am putut sa il scriem, dar nu a aparut fraza: Welcome! Please enter your name: 
+	-asta deoarece nu exista prompt ul, desi ne a acceptat input ul
+	-aplicatia a dat prompt pe terminal si noi nu ne am atasat la terminalul containerului
+	-pentru a face asta folosim optiunea -t (pseudo terminal)
+	
+	> docker run -it kodekloud/simple-prompt-docker
+	Welcome! Please enter your name: Mumshad
+	
+	Hello and Welcome Mumshad!
+	
+	-deci cand folosim combinatia -it , suntem atasati la terminalul containerul dar si intr-un mod interactiv al containerului
+	
+	
+RUN - PORT mapping
+	
+	> docker run kodekloud/webapp
+	*Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+	
+	-host ul unde Docker este instalat se numeste Docker host sau Docker engine
+	-rulam comanda pt a porni un Webb App
+	-cand rulam un web app containerizat, acesta e pornit si noi putem vedea ca serverul merge, dar cum se poate conecta un user la aplicatie?
+	-dupa cum putem vedea, aplicatia asculta pe portul 5000, deci eu as putea accesa aplicatia folosind portul 5000
+	-pt a accesa aplicatia de pe un browser, avem doua variante:
+		1. folosim ip ul containerului docker - fiecare container docker are asignat un ip by default, in cazul de fata este 172.17.0.2
+			-dar acesta este un ip intern si este accesibil doar din host ul docker
+			-deci daca deschidem un browser in docker host si mergem la http://172.17.0.2:5000 
+			-din moment ce ip ul este intern, userii dinafara host ului docker nu vor putea accesa aplciatia
+			
+		2. pt ca userii dinafara docker host sa se poate conecta la docker container putem folsi ip ul docker host ului
+			-acesta este ip ul docker host ului: 192.168.1.5
+			-dar ca sa functioneze conectarea userilor la docker container prin ip ul docker host ului, trebuie sa facem un mapping de port uri
+			-adica, sa mapam port ul docker containerului(5000) la un port liber al docker host ului (80 sa zicem)
+			-deci, de exemplu, daca vreau ca userii sa acceseze app-ul prin port ul 80 de pe docker host, as putea sa mapez portul 80 al local host la portul 5000 pe docker container, folosind parametrul -p in comanda run asa:
+			
+			> docker run -p 80:5000 kodekloud/webapp
+			
+			-acuma, userul se poate conecta la app folosit link ul format din ip ul docker host ului si portul acestuia 80 mapat la cel al docker containerului(5000) care contine webb app ul
+			
+			http://192.168.1.5:80
+			
+			-si tot traficul de pe port ul 80 de pe docker host va fi rutat catre portul 5000 inauntrul docker containerului 
+			-astfel, putem rula mai multe instante ale aplicatiei si sa le mapam pe diferite port uri ale docker host ului
+			-sau sa rulam instante ale diferitelor aplicatii pe diferite port uri
+	
+			> docker run -p 8000:5000 kodekloud/webapp
+			> docker run -p 8001:5000 kodekloud/webapp		//diferite instante ale aceleiasi aplicatii web
+			
+			-de exemplu putem rula si o instanta de mysql care are o baza de date pe host ul meu pe port ul liber 3306 si asculta pe portul default mysql care e tot 3306
+			-si inca o instanta mysql pe alt port 8306 mapat pe portul default mysql 3306:
+			
+			> docker run -p 3306:3306 mysql
+			> docker run -p 8306:3306 mysql
+			> docker run -p 8306:3306 mysql		//erroare
+	
+			-si desigur ca nu putem sa mapam acelasi port de pe docker host de mai multe ori(8306)
+			
+	
+RUN - Volume mapping 
+	
+	-de ex, sa zicem ca trebuie sa rulam un container MySQL
+	-cand tabelele si bazele de date sunt creeate, data files sunt stored in locatia var/lib/mysql in docker containerul nostru mysql 
+	-docker containerul are propriul sistem de fisiere izolat si orice schimbare asupra oricarui fisier se intmpla inauntrul containerului 
+	-sa zicem ca punem multe date in baza de date, ce se intampla daca trebuie sa stergem containerul
+	-toate datele din container impreuna cu acesta sunt sterse, deci toate inregistrarile din bd sunt sterse
+		
+	> docker run mysql
+	> docker stop mysql
+	> docker rm mysql
+	
+	-daca vrem sa avem datele persistente, trebuie sa mapam un folder dinafara containerului, de pe docker host, la folderul nostru din container
+	-in acest caz, creez folderul /opt/datadir pe docker host si il mapam la folderul var/lib/mysql de pe containerul nostru mysql
+	-asta se face folosind optinea -v si specificand folderul de pe docker host urmat de : si de folderul din containerul docker 
+	-astfel, cand rulam docker containerul, va da mount implicit la folderul extern(de pe host) la un folder dinauntrul containerului 
+	-astfel, toate datele vor fi acuma stored in volumul extern la /opt/datadir si astfel vor ramane chiar daca stergem containerul docker
+	
+	> docker run -v /opt/datadir:/var/lib/mysql mysql 
+	
+	
+Inspect Container
+	
+	-comanda docker ps e ok pt a vedea detaliile basic ale containerelor ca si id uri, numele lor 
+	-dar daca vrem sa vedem detalii aditionale despre un container anume, folosim comanda docker inspect urmata de un id sau nume al unui container 
+	
+	> docker inspect blissful_hopper
+	
+	-returneaza toate detaliile unui container intr un format JSON, ca si state, mounts, configuration data, network settings etc
+	-tinem minte sa folosim comanda cand avem nevoie sa gasim detalii despre un container 
+	
+Container Lgos
+
+	-cum vedem log urile unui container pe care il rulam in backround cu -d
+	-de ex am rulat simple web app in modul detasat -d adica in backround, cum vedem log urile adica continuturile scrise in standart out al containerului 
+	-folosim comanda docker logs urmata de numele sau id ul containerului
+	
+	> docker logs blissful_hopper
+	
+	
+Advanced Docker Run Commands 
+
+	> docker run ubuntu cat /etc/*release*
+	
+	-va rula un container cu imaginea deja downloadata ubuntu si ne va afisa continutul fisierului release unde vedem ca versiunea imaginii este 16.04
+	-daca vrem o alta versiune mai noua, mergem pe docker hub, cautam imaginea folosita de noi si ne uitam la supported tags si il alegem pe cel dorit, sau pe ultimul aparut 
+	-daca atunci cand dam prima data run la comanda nu specificam niciun tag, il va lua pe cel numit latest, care nu este ultimul aparut 
+	-de exemplu, aici https://hub.docker.com/_/ubuntu , avem tag ul latest in dreptul unei versiuni care nu este ultima aparuta, ci 24.04 , ultima aparuta este 24.10
+	-daca vrem sa folosim alta versiune decat cea latest, trebuie sa ii dam tag ul versiunii respective dupa numele imaginii si :
+	
+	> docker run ubuntu:21.10 cat /etc/*release*
+	
+	-dupa ce dam run la comanda asta, va vedea ca nu exista local versiunea asta de imagine, o va downloada si versiunea printata acuma va fi cea alesa de noi 
+	
+	> docker run ubuntu sleep 15
+	
+	-daca rulam comanda asa, vom fi blocati in consola in care nu vedem nimic, fara sa putem da ctrl c sa iesim, trebuie sa asteptam 15 sec sa dea exit containerul ca sa ne scoata si pe noi din consola inapoi in prompt ul initial 
+	-asta e modu default in care ruleaza un container, pt a l opri si a iesi din consola, mai facem un tab cu duplicate tab pe acelasi host si ii dam docker ps si docker stop <id-ul lui> 
+	-daca vrem sa rulam un container in backround trebuie sa ii dam optiunea -d (detached mode)
+	
+	> docker run -d ubuntu sleep 1500
+	
+	-daca vrem totusi sa ne intoarcem la consola containerului respectiv, dam comanda:  > docker attach <id-ul cont.>
+	
+	> docker run timer
+	
+	-comanda asta ne va printa la infinit data si ora exacta cu secundele(current time) in fiecare secunda la infinit, containerul nu se opreste
+	-daca nu folosim optiunea -d pt a rula containerul in backround, acesta va rula in foreground: > docker run -d timer
+	-putem sa o rulam cu optiunea -d si sa fie in backround si ne putem atasa la container din nou dupa ce ii luam id ul din docker ps si ii dam > docker attach <id cont.>
+	
+	
+	-daca vrem sa incercam o aplicatie noua ca jenkins(server de ci/cd), putem sa facem un container cu imaginea ei de pe docker hub, in loc sa o instalam de la 0 cu toate dependintele necesare etc..
+	-docker hub ul imaginii jenkins/jenkins https://hub.docker.com/r/jenkins/jenkins/tags , unde avem si tag urile disponibile si comanda: > docker run -p 8080:8080 -p 50000:50000 --restart=on-failure jenkins/jenkins:lts-jdk17
+	
+	> docker run jenkins/jenkins
+	
+	-putem sa dam run la comanda si asa, va descarca cea mai recenta imagine de jenkins si va porni serverul 
+	-mergem in UI ul host ului in terminalul caruia am rulat si comanda anterioara si daca dam docker ps, vedem ca containerul e running si e pe port urile 8080 si 50000
+	-sunt 2 metode de a accesa aceasta aplicatie pe web UI: prima e sa folosim ip ul intern si a doua sa mapam un port catre docker host si sa il accesam folosind un ip extern 
+	-ca sa o accesam folosind ip ul intern, trb sa fim in docker host si sa aflam ip ul intern al containerului 
+	-pt aceaasta, mergem in terminal, dam docker ps si luam id ul si rulam comanda: 
+	
+	> docker inspect <id ul cont.> 
+	
+	-o sa ne dea f multe informatii dar daca dam scroll jos pana la "Networks" si sub acesta la "IPAdress": 172.17.0.2 
+	-sau rulam comanda: > docker inspect --format='{{.NetworkSettings.IPAddress}}' mynginx	//si in loc de mynginx putem da id ul containerului de asemenea
+	-deci acesta este ip ul pe care il putem folosi daca vrem sa ne conectam la containerul docker din interiorul docker host ului nostru
+	-revenim la UI si mergem pe un browser si punem id ul pe care l am copiat din terminal urmat de :8080, astfel: http://172.17.0.2:8080 si dam enter
+	-ne va duce direct in jenkins unde ne cere parola de admin
+	-daca ne uitam in output ul comenzii > docker run jenkins/jenkins , vom vedea ca scrie la un mom dat intre randurile de *********, asa:
+	-Jenkins initial setup is required. An admin user has been created and passworkd generated. Please use the fallowing password to proceed to installation: si dam copy paste in browser la parola lunga de zici ca e un hash pt a debloca si a incepe configurarile pe jenkins 
+	-dar dupa cum putem vedea, suntem pe aceasta pagina web folosind ip ul intern 172.17.0.2 , ceea ce e bine, acuma vedem a doua varianta sa il accesam extern 
+	
+	-ip ul docker host ului este 192.168.1.14 si daca intram pe browser si cautam 192.168.1.14:8080 nu va merge deoarece port ul 8080 nu asculta la docker host 
+	-ca sa rezolvam asta, ca in lectia trecuta, trebuie sa adaugam port mapping 
+	-nu putem face port mapping in timp ce serviciul merge(containerul jenkins)
+	-oprim containerul jenkins prin a da ctrl c in terminalul unde l am pornit, sau mergand pe alt terminal duplicat si docker stop id 
+	-dupa ce il oprim dam docker ps din nou sa ne asiguram ca e exited si il rulam iar cu parametrul -p astfel:
+	
+	> docker run -p 8080:8080 jenkins/jenkins
+	
+	-deci folosim aceeasi comanda de run, dar in cazul acesta mapam portul 8080 din container la portul 8080 din docker host si rulam comanda 
+	-acum daca ne intoarcem pe browser si cautam http://192.168.1.14:8080 ne va baga pe pagina de jenkins unde ne cerea parola de admin din terminal 
+	-daca punem parola din terminal si facem un cont nou de admin si facem un job de test si dupa dam ctrl c in terminal sa dam exit la container, schimbarile nu vor ramane cand pronim din nou containerul 
+	-asa ca trebuie sa facem si volume mapping, daca vrem ca schimbarile sa persiste chiar daca dam exit sau remove(rm) la container si il pornim iarasi
+	-comanda completa pt mapping pe doua porturi si un volum(folder) pe docker host:  > docker run -p 8080:8080 -p 50000:50000 --restart=on-failure -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk17
+	-asta e comanda de pe github ul oficial al imaginii de pe docker hub, dar putem sa facem si manual anumiti pasi:
+	-creeam un folder pe docker host direct din terminal: mkdir my-jenkins-data si cand rulam comanda run data viitoare adaugam si optiunea -v si path ul de la folderul nostru creeat pe host(/root/my-jenkins-data) umrat de : si de pathul folderului unde se pun schimbarile de pe container, care by default este /var/jenkins_home    
+	-daca avem probleme cu permisiunile dam si optiunea -u root specificand userul root care are perimisiuni aparent
+	
+	> docker run -p 8080:8080 -v /root/my-jenkins-data:/var/jenkins_home -u root jenkins/jenkins
+	
+	-din moment ce e prima oara cand mapam folderul, trebuie sa facem iar configurarea jenkinsului, dam copy paste la parola, instalam pluginurile default, creeam un nou user admin si un nou job 
+	-dupa ce facem asta, ne intoarcem la terminal si oprim containerul cu ctrl c sau docker stop id in alt terminal si dam docker ps sa ne asiguram ca e exited 
+	-si acuma dam rerun la comanda docker run cu maparea pe porturi si foldere si specificand userul root cu toate permisiunile posibile
+	-acuma e running si daca dam refresh la pagina web de jenkins unde eram(http://192.168.1.14:8080), in loc sa ne ceara iarasi parola lunga care seamana cu un hash, ne va cere userul si parola de la contul de admin pe care l am creeat adineaori cand a rulat ultima oara containerul 
+	-asta arata ca toate datele custom de configurare care au fost generate de containerul docker sunt stored local pe docker host, deci de fiecare data cand rulam o noua instanta de jenkins, putem sa o mapam la folderul respectiv(my-jenkins-data) si toate datele de configurare sunt preluate de jenkins cand ruleaza containerul docker 
+	
+Lab Docker Run:
+	
+	0.0.0.0:3456->3456/tcp, :::3456->3456/tcp, 0.0.0.0:38080->80/tcp, :::38080->80/tcp   
+	
+	-acestea sunt porturile unui container afisate in docker ps 
+	-cate porturi sunt publicate pe container? How many ports are published on this container? //raspuns: 2  3456 si 80
+	-Which of the below ports are the exposed on the CONTAINER		// cele de dupa -> sunt exposed pe container: 3456 si 80
+	-Which of the below ports are published on Host?	           // cele de dinaintea -> sunt exposed sau published pe host: 3456 si 38080
+	
+	-Run an instance of kodekloud/simple-webapp with a tag blue and map port 8080 on the container to 38282 on the host.
+	
+	> docker run -p 38282:8080 kodekloud/simple-webapp:blue  
+	
+	-la ambele argumente, de mapare a porturilor 
+	
+	
+Docker Images
+
+	-putem sa ne creeam si noi propria imagine docker, daca nu gasim un serviciu sau o componenta pe care vrem sa o folosim in app pe docker hub sau vrem ca aplicatia noastra sa fie dockerized pt a fi mai usor de deployed si shipped
+	-incepem sa ne gandim ce am face daca am vrea sa dam deploy la aplicatie manual
+	-scriem pasii care ne trebuie in ordinea corecta si facem o imagine pt o aplicatie web simpla 
+	-de ex: -instalam os-ul ubuntu, dam update la repository urile sursa cu apt repo, instalam dependinte cu comanda apt, instalam dependinte python cu pip, copiem codu sursa al aplicatiei intr-o locatie ca si /opt si dam run la web server cu comanda flask
+	-creeam un docker file numit Dockerfile si scriem in el instructiunile pt a face aplicatia sa mearga ca si instalarea dependintelor, de unde sa copiem si unde sa dam paste la codu sursa si care e entry point ul aplicatiei etc..
+	-dam build la imagine folosind comanda build in care folosim numele docker file ului nostru ca input si un tag name pt imagine:
+	
+	Dockerfile
+	
+	FROM Ubuntu
+	
+	RUN apt-get update && apt-get -y install python 
+	
+	RUN pip install flask flask-mysql 
+	
+	COPY . /opt/source-code
+	
+	ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run 
+	
+	> docker build . -f Dockerfile -t mmumshad/my-custom-app 
+	
+	-asta va creea o imagine local pe sistemul nostru, pt a o publica pe docker hub, folosim comanda push si numele imaginii abia creeate
+	
+	> docker push mmumshad/my-custom-app
+	
+	-Dockerfile este un fisier txt scris intr un format specific pe care Docker il poate intelege
+	-e intr un format instructiune si argument .
+	-de ex, in acest Dockerfile totul din stanga scris cu caps este o instructiune(FROM, RUN ...)
+	-fiecare dintre acestea il instruiesc pe docker sa performeze o actiune specifica atunci cand creeaza imaginea
+	-totul din partea dreapta este un argument pt acele instructiuni 
+	-prima linie(FROM Ubuntu) defineste care ar trebui sa fie OS ul de baza pt acest container 
+	-fiecare imagine docker trebuie sa fie bazata pe alta imagine, fie un OS sau o imagine care a fost creeata inainte bazata pe un OS 
+	-putem gasi release uri oficiale ale tuturor sistemelor de operare pe docker hub
+	-TOATE imaginile docker trebuie sa inceapa cu o instructiune FROM 
+	-instructiunea RUN il instruieste pe docker sa ruleze o anumita comanda pe aceste imagini de baza 
+	-deci, acum docker ruleaza comanda apt-get update pt a prelua packetele updatate si instaleaza depdentintele de care avem nevoie pe imagine 
+	-comanda COPY copiaza fisierele din sistemul local de fisiere pe imaginea docker 
+	-in acaest caz, codul sursa al app-ului este in folderul curent si il vom copia pe tot(asta inseamna tot -> .) in locatia /opt/source-code din imaginea docker 
+	-entry point-ul ne lasa sa specificam o comanda care o sa fie rulata cand imaginea e rulata ca un container(cu docker run)  
+	-docker face imaginile pe o arhitectura cu mai multe straturi, fiecare linie de instructiune creeaza un nou layer in imaginea docker doar cu schimbarile din layer-ul anterior 
+	-primul layer e un OS de baza Ubuntu, urmat de a doua instructiune care creeaza al doilea layer care instaleaza toate pachetele APT si dupa a treia instructiune creeaza un al treilea layer cu pachetele python, urmat de al 4 ulea layer care copiaza codul sursa in imagine, urmat de ultimul layer care updateaza entry point ul imaginii 
+	-din moment ce fiecare layer tine doar schimbarile din layerul precedent, se reflecta si in dimensiune  
+	-daca ne uitam, imaginea de baza ubuntu are 120MB, pachetele apt instalate au 300MB si celelalte layere sunt mici 
+	-putem vedea aceste informatii daca rulam comanda > docker history <numele imaginii>
+	-cand rulam comanda > docker build ., putem vedea pasii si rezultatul fiecarei comenzi(un step e o comanda FROM, RUN ..)
+	-arhitectura pe straturi ne lasa sa dam restart la dokcer build de la un anumit pas, in cazul in care acesta da fail 
+	-sau daca trebuie sa adaugam noi pasi in procesul de build, nu trebuie sa o luam de la 0 
+	-toate layerele built sunt cached de docker, deci daca un anume pas da fail, de ex al 3 lea si trebuie sa remediem problema si sa rulam din nou docker build va refolosi layerele de dinainte din cache si va continua sa dea build la urmatoarele layere 
+	-aceeasi chestie e valabila daca ar fi sa adaugam pasi aditionali in Dockerfile, astfel rebuild uirea imaginii e mai rapida si nu trei sa asteptam dupa docker sa build uiasca toata imaginea de fiecare data 
+	-asta e de ajutor cand schimbam cod sursa al aplciatiei, deoarece se intampla mai frecvent
+	-doar layerele de sub cele udpatate trebuie sa fie rebuild uite(cele care urmeaza dupa cele schimbate)
+
+DEMO
+
+	-avem un web app foarte simplu, care doar printeaza niste mesaje cand apelam endpoint ul facut cu python flask 
+	-vrem sa facem o imagine custom pt a containeriza aplciatia
+	-folosim imaginea de ubuntu la baza si rulam comanda docker run cu aceasta si ii dam si comanda bash cand se porneste si ne conectam la modul interactiv cu -i sa ii putem da input si -t pt a ne atasa terminalul la acest container 
+	
+	> docker run -it ubuntu bash
+	
+	-acum trebuie sa instalam python, dar prima oara trebuie sa updatam package index ca sa poata gasi packetul python 
+	
+	> apt-get update 	//to update the package index   
+	
+	-acuma vom rula comanda pt a instala python efectiv 
+	
+	> apt-get install -y python 	//daca da fail mau rulam odata comanda si va merge
+	
+	-daca rulam python in terminal o sa vedem versiunea si dupa tre sa dam eit sa iesim din prompt ul python
+	-acuma trebuie sa instalam flask, dar pt a-l instala pe acesta trebuie sa instalam python pip mai intai 
+	
+	> apt-get install python-pip 
+	> pip install flask 
+	
+	-acuma ne trebuie codul sursa caruia ii dam copy paste intr un fisier .py pe care il creeam acum
+	
+	> cat > /opt/app.py   //si dam paste aici la tot
+	
+	-acuma dam comanda pt a porni web serverul si a da entry point ul aplicatiei
+	
+	> cd opt 
+	> FLASK_APP=app.py flask run --host=0.0.0.0 
+	
+	-acum o sa ruleze appul si ne va afisa pe ecran Running on http://0.0.0.0:5000/	
+	-asta inseamna ca serverul web o sa asculte pe portul 5000 al continerului
+	-cum nu am mapat un port din docker host la cel exposed din container(care este 5000), ne putem conecta prin browser la server doar intern, de pe docker host, folosind ip ul containerului(172.17.0.2)
+	-deci intram pe browser din docker host si scriem sus: http://172.17.0.2:5000 (ip ul containerului si portul expus al containerului) si o sa vedem mesajul Welcome care apare pe site
+	-daca ii dam end point ul http://172.17.0.2:5000/how are you ne va afisa pe site: I am good, how about you? 
+	-acuma vrem sa si dockerzam aplicatia, dam ctrl c sa iesim aplicatie si din terminalul de optput al serverului pe care l am deschis adineaori, unde am primit si output ca ne am conectat la server din browser cu ip ul containerului
+	-deja avem instructiunile pt Dockerfile, deci o sa dam comanda history, fiind in container acum, ca sa ne afiseze comenzile pe care i le am dat ca sa le putem nota intr un notepad ca sa ne fie mai usor si el va arata asa:
+	
+	apt-get update 
+	apt-get install -y python 
+	apt-get install pip
+	pip install flask
+	Create/Copy application code to /opt/app.py
+	
+	
+	FLASK_APP=opt/app.py flask run --host=0.0.0.0 
+	
+	-acum suntem in containerul cu serverul practic, cu imaginea ubuntu, la care ne am atasat cu opriunea -it in comanda run si vom iesi din el cu comanda exit 
+	-acum suntem inapoi in root, in docker host, dam un docker ps si vedem ca nu avem niciun container running, pt ca tocmai ce am dat exit la singurul care era running 
+	-prima oara facem un folder: mkdir my-simple-webapp , cd my-simple-webapp
+	-creem un docker file: cat > Dockerfile 	//si scriem urmatoarele
+	FROM ubuntu				//primu lucru mereu e instructiunea FROM si incepem cu un ubuntu based operating system
+	
+	RUN apt-get update 
+	RUN apt-get install -y python python-pip	//am combinat doua comenzi, cea de install python si cea de install pip
+	RUN pip install flask 
+	
+	COPY app.py /opt/app.py 		// sa zicem ca avem app.py in folderul nostru local(my-simple-webapp de pe host), deocamdata nu l avem dar il vom avea dupa ce facem docker file ul 
+									//deci avem app.py si vrem sa fie copiat la /opt/app.py in docker container
+	ENTRYPOINT FLASK_APP=opt/app.py flask run --host=0.0.0.0 	//codul pt a rula aplciatia care va merge in entrypoint, punem comanda pt a rula aplicatia
+	
+	-cam asta e, dam ctrl c sa iesim din comanda cat in care am scris Dockerfileu
+	-ne trebuie codul aplicatiei inainte sa-i dam build 
+	-in folderul nostru de pe docker host my-simple-webapp, dam cat > app.py  si dam copy paste la cod
+	-acum suntem all set, in folderul nostru dam comanda: > docker build .  si va incepe sa dea build la imagine
+	-vom vedea efectiv pasii(comenzile) cum sunt executati, prima e gata deja ca avem deja imaginea ubuntu pulled, la pasul doi putem vedea output ul instructiunii ca si la restu care vor urma 
+	-daca ne uitam la comanda de mai sus docker build .   nu am specificat niciun nume pt imagine
+	-mai rulam odata si ii dam un nume, ptrintr un tag si cum e deja build uita o sa dureze foarte putin de data asta cand dam comanda pt ca nu trb sa dea rebuild la imagine din nou, deoarece docker build uieste si baga in cache fiecare layer si chiar daca dau rebuild la imagine fara nicio schimbare la vreun pas(comanda) o sa dea build foarte repede si nu va merge iar prin tot procesul de build  
+	
+	> docker build . -t my-simple-webapp 
+	
+	-acum daca dam comanda > docker images, vom vedea imaginea noastra tocmai creeata cu numele dat de noi a doua oara my-simple-webapp
+	-acum o sa dam si run la imagine cu comanda > docker run my-simple-webapp
+	-vedem ca a pornit si asculta pe portu 5000 (http://0.0.0.0:5000)
+	-deci daca mergem in host in browser si mergem la linkul http://172.17.0.2:5000 vom vedea ca merge 
+	-deci daca ne conectam din host la container, folosim ip ul containerului(172.17.0.2) si portul pe care asculta containerul - 5000
+	-putem de asemenea sa mapam un port si sa ne conectam din afara docker host ului folosind ip ul docker host ului, de ex 192.168.1.5
+	-daca ne conectam din afara docker host ului trebuie sa mapam un port liber al host ului, sa zicem 80 la portul expus pe care asculta containerul nostru 5000: > docker run -p 80:5000 my-simple-webapp si vom accesa folosind ip ul docker host ului si portul mapat de pe acesta: 192.168.1.5:80
+	-acum ca avem imaginea noastra custom, trb sa ii dam push pe docker hub sa fie disponibila publicului
+	-trebuie sa ne tagam aplicatia cu repo ul nostru, daca dam comanda > docker push my-simple-webapp  va da access denined pt ca incearca sa o pusheze pe contul ul default oficial, libary , la care n avem acces, deci putem pusha doar pe repo uri ale contului nostru
+	-deci tre sa builduim imaginea si sa o tagam cu account name ul nostru / numele app ului nostru, de ex:
+	
+	> docker build . -t mmumshad/my-simple-webapp		//contu nostru e mmumshad urmat de / si numele app ului 
+	
+	> docker push mmumshad/my-simple-webapp		//care ne va crapa iara ca trb sa fim logati
+	
+	> docker login 		// Username: mmumshad	Password: *****  deci bagam credentialele
+	
+	> docker push mmumshad/my-simple-webapp		//acuma va da push la imagine pe docker hub
+	
+	-deci acu daca mergem pe docker hub si suntem logati si mergem la dashboard ul nostru o sa pot vedea imaginea mea aici in lista in public repo ul nostru, daca dam pe ea vedem si comanda de pull 
+	-imaginea este acuma disponibila public, putem face si repo ul privat daca vrem, dar cu contu nostru free de docker hub putem avea doar un repo privat 
+	-deci acuma orice user de oriunde din lume poate da run la imaginea noastra 
+	TO DO: sa facem imaginea noastra sa dockerizam un app de al nostru ca site urile alea pe care le am facut 
+	
+Lab
+
+	-intram in folderul webapp-color unde vedem docker file ul :
+	
+	FROM python:3.6
+
+	RUN pip install flask
+
+	COPY . /opt/
+
+	EXPOSE 8080
+
+	WORKDIR /opt
+
+	ENTRYPOINT ["python", "app.py"]
+	
+	-comanda care se ruleaza cand un container e creat folosind imaginea build uita cu acest Dockerfile, comanda folosita sa dam RUN la aplicatia dinauntrul acesteia este in entry point: python app.py 
+	-portul expus cand se ruleaza aplicatia este 8080 
+	> docker build . -t webapp-color   //pt a buildui imaginea folosin Dockerfileu respectiv
+	
+	> docker run -p 8282:8080 webapp-color		//pt a mapa portul 8282 de pe host la 8080 de pe container, web appu o sa fie running pe http://172.12.0.2:8080 -> accesibil din docker host si pe http://192.168.1.5:8282 din afara host ului pt useri 
+	
+	> docker run python:3.16 cat /etc/*release* 	//pt a afla ce os are la baza imaginea python 3.6
+	
+	-trb sa facem alta imagine mai light deci vom intra pe docker hub la python 3.6 si gasim ca alpine:3.6 este mai light 
+	-cautam pe google docker hub python si aici https://hub.docker.com/_/python/tags cautam la tags 3.6 si o gasim de ex pe cea cu tagu 3.6-alpine sau 3.6.15-slim-buster pe care il punem in docker file in loc de 3.6 la FROM 
+	
+	> docker build . -t webapp-color:lite 		//pt a buildui noua imagine mai mica ca si size pt python
+	
+	> docker run -p 8383:8080 webapp-color:lite	//pt a rula o instanta a noi imagini mai light si mapam portul 8383 de pe host la 8080 de pe noul container 
+	
+	
+Environment Variables
+
+	-de exemplu avem un mic site web a carui culoare de fundal o hardcodam in codul aplicatiei, dar care pe viitor vrem sa o putem schimba fara sa modificam valoare hardcodata, direct cu un environment variable
+	-in loc de color = "red" , va fi color = os.environment.get('APP_COLOR')
+	-asta ne va permite sa dam valoarea variabilei in linia de comanda fisierului nostru app.py cu codul de python astfel:
+	
+	> export APP_COLOR=blue; python app.py 		//acum daca dam run la container cu imaginea respectiva, care contine si codul nostru de python, culoarea fundalului va fi cea specificata de noi, albastar 
+	
+	-daca vrem sa pasam valoarea environment variable direct cand rulam containerul, folosim optinea -e astfel:
+	
+	> docker run -e APP_COLOR=blue simple-webapp-color		//culoarea backround ului din acest container 
+	
+	-daca vrem sa rulam mai multe containere cu alte culori, o putem face ruland de mai multe ori comanda run cu diferite valori ale env var 
+	
+	> docker run -e APP_COLOR=blue simple-webapp-color
+	> docker run -e APP_COLOR=green simple-webapp-color 
+	
+	-pt a gasi ce valoare are evn var pe un container care este deja running, folosim comanda > docker inspect blissful_hoper (numele sau id ul containerului cred, in ex e folosit numele)
+	-sub sectiunea "Config" , vom gasi o lista cu env variables setate pe container "Env", avem "APP_COLOR=blue"
+	
+LAB 
+
+	-e un container de docker care e running, tre sa gasim valoarea env var numita APP_COLOR de pe acesta 
+	> docker ps    //pt a afla numele sau id ul containerului pe care le vom folosi 
+	> docker inspect   //si dam scroll pana jos unde gasim "Config" si sub el cautam "Env" si sub el gasim APP_COLOR=pink 
+	
+	-pt a rula un container cu img de baza kodekloud/simple-webapp care sa aiba env var app color blue si numele blue app si sa asculte pe portu 8080 mapat pe host la portul 38282
+	
+	> docker run -p 38282:8080 --name blue-app -e APP_COLOR=blue kodekloud/simple-webapp
+	
+	-task: Deploy a mysql database using the mysql image and name it mysql-db. Set the database password to use db_pass123. Lookup the mysql image on Docker Hub and identify the correct environment variable to use for setting the root password.
+	-intram aici pt a vedea un ex de deploy la un container cu img mysql si setare a parolei pt root user https://hub.docker.com/_/mysql
+	
+	> docker run --name mysql-db -e MYSQL_ROOT_PASSWORD=db_pass123 mysql 
+	
+	
+Command vs Entrypoint 
+
+	-daca rulam un container cu imagine de baza ubuntu, nu il vom gasi la docker ps, deoarece acesta va da exit aproape instant
+	-spre deosebire de masinile virtuale(VM-uri), containerele nu sunt menite sa dea host la un sistem de operare 
+	-containerele sunt menite sa dea run la un task sau un proces, ca de ex sa dea host la o instanta de server web sau web app sau baza de date sau sa ruleze un fel de task de computatie sau de analiza 
+	-cand task ul este complet, containerul da exit 
+	-un container traieste atat timp cat procesul din el e in viata 
+	-daca serverul web dinauntrul containerului e oprit sau da crash, containerul da exit 
+	-daca ne uitam la Dockerfile-ul unei imagini populare docker(ngnix de ex), vom vedea o instructiune numita CMD adica command care defineste programul care va rula inauntrul containerului   CMD["ngnix"] //default command
+	-pt imaginea mysql este CMD ["mysqld"]
+	-mai devreme am incercat sa dam run la un container cu un os ubuntu gol(plain)
+	-ne uitam la Dockerfile-ul imaginii Ubuntu si vedem ca foloseste bash ca si comanda default 
+	-bash nu e chiar un proces ca un server web sau o baza de date, e un shell care asculta input uri de la un terminal, daca nu gaseste un terminal, da exit 
+	-deci, cand am rulat containerul ubuntu mai devreme, docker a creat un container dintr o imagine ubuntu si a dat launch la programul bash 
+	-by default, docker nu ataseaza un terminal la container cand acesta e pornit, si deci programul bash nu gaseste terminalul si da exit, deoarece procesul care a fost pornit, cand containerul a fost pronit, s a terminat, containerul se termina de asemenea
+	-ca sa specificam o alta comanda decat cea default cand pornim un container, putem da append la o comanda la comanda docker run si astfel se suprascrie comanda default din imagine(din dockerfile)
+	
+	> docker run ubuntu [COMMAND] // sleep 5
+	
+	-astfel, cand pornim containerul adaugam optiunea sleep 5, astfel, cand containerul porneste ruleaza programul sleep, asteapta 5 secunde si da exit 
+	-sa zicem ca vrem ca imaginea sa ruleze mereu comanda sleep cand o pornim, trebuie sa ne creeam imaginea noastra din imaginea de baza ubuntu si specificam o noua comanda:
+	
+	FROM Ubuntu
+	
+	CMD sleep 5
+	
+	-putem scrie comanda in doua feluri: CMD command param1        CMD sleep 5
+										 CMD ["command", "param1"] CMD ["sleep", "5"]
+										 
+	-in formatul JSON, primul element din array ar trebui sa fie executabilul
+	-comanda si parametrul acesteia ar trebui sa fie elemente separate in lista cum is mai sus, nu asa: CMD ["sleep 5"]
+	-acuma ne putem buildui noua imagine si dupa sa rulam un container pe baza acesteia si sa avem acelasi rezultat ca si cand rulam comanda sleep ca si adaos comenzii de run (asteapta 5 sec si da exit)
+	
+	> docker build -t ubuntu-sleeper .	 // builduim imaginea pe care o numim ubuntu-sleeper si ne atasam cu un terminal la aceasta cu -t 
+	
+	> docker run ubuntu-sleeper 
+	
+	-putem sa suprascriem comanda sleep pt a modifica valoarea parametrului acesteia dand comanda:
+	
+	> docker run ubuntu-sleeper sleep 10	// Command at Startup: sleep 10
+	
+	-dar nu arata prea ok, numele imaginii implica comanda sleep deci nu ar trebui sa specificam numele comenzii din nou ci doar noul parametru, de ex 10
+	-astfel trebuie sa folosim instructiunea ENTRYPOINT, care este ca cea CMD, pt ca putem specifica programul(comanda) care va fi rulat cand pornim containerul si ce specificam in linia de comanda in acest caz va fi adaugat la ce e scris in entrypoint 
+	
+	FROM Ubuntu
+	
+	ENTRYPOINT["sleep"] 
+	
+	> docker run ubuntu-sleeper 10		// Command at Startup: sleep 10
+	
+	-deci asta e diferenta dintre cele doua, in cazul instructiunii CMD, parametrii din linia de comanda pasati vor fi inlocuiti complet, spre deosebire de entrypoint, unde parametrii din linia de comanda vor fi apenduiti(adaugati) la ce scrie in acesta
+	-deci, in cazul CMD, trebuie sa scriem toata comanda dupa numele img ca se inlocueiste cu totul cu cea din dockerfile din cmd, gen efectiv da replace cu totu si de aia trb sa scriem iar toata comanda
+	-in cazul ENTRYPOINT, trebuie sa dam doar parametrul comenzii care se apenduieste la oexecutabilul comenzii scris in acesta, de aia trb sa scriem doar 10 ca in entrypoint e scris sleep si se da append efectiv cu parametru 10
+	-deci in cazu cmd ce scriem in linia de comanda este replace uit cu totu in CMD, pe cand in ENTRYPOINT doar se da append la parametrii pe care ii scriem noi in linia de comanda la ce scrie intre [] entrypoint ului 
+	-acum in al doilea caz, entrypoint, daca rulam comanda > docker run ubuntu-sleeper  fara a scrie nr de secunde, atunci comanda la start up va fi doar SLEEP si vom avea eroare ca operandul lipseste
+	Command at startup: sleep 
+	
+	-deci cum configuram o valoare default pt comanda in caz ca nu a fost niciuna specificata in CMD 
+	-folosim si ENTRYPOINT si CMD:
+
+	FROM Ubuntu
+	
+	ENTRYPOINT ["sleep"]
+	
+	CMD ["5"]				// Command at startup: sleep 5
+	
+	-astfel, instructiunea CMD va fi apenduita la instructiunea ENTRYPOINT, DACA SI NUMAI DACA nu specificam niciun parametru in linia de comanda
+	-daca specificam o valoare(parametru) in linia de comanda, atunci acesta va suprascrie instructiunea CMD:
+	
+	> docker run ubuntu-sleeper 10		// Command at Startup: sleep 10
+	
+	-REMEMBER: ca sa se intample asta, mereu ar trebui sa specificam instructiunile ENTRYPOINT si CMD in format JSON 
+	
+	-putem suprascrie si ce este in instructiunea ENTRYPOINT efectiv, folosind optiunea --entrypoint astfel:
+	
+	> docker run --entrypoint sleep2.0 ubuntu-sleeper 10 	// Command at Startup: sleep2.0 10
+	
+	-astfel vom suprascrie complet instructiunea ENTRYPOINT cu sleep2.0 urmata de parametrul 10 care suprascrie instructiunea CMD 
+	
+Lab
+
+	ENTRYPOINT ["docker-entrypoint.sh"]		//entrypoint ul din aplicatia docker mysql
+	
+	ENTRYPOINT ["docker-entrypoint.sh"]
+	CMD ["apache2-foreground"]				//cmd ul din aplicatia docker wordpress
+	
+	-comanda finala rulata la pornirea containerului bazat pe imaginea wordpress este: docker-entrypoint.sh apache2-foreground
+	
+	-Dockerfile-ubuntu: ... CMD=["bash"]	//nu avem entrypoint deci comanda la pornirea containerul pe baza imaginii ubuntu este doar: bash 
+	
+	Task: Run an instance of the ubuntu image to run the sleep 1000 command at startup. Run it in detached mode.
+	
+	> docker run -d ubuntu sleep 1000
+	
+
+Docker Compose 
+
+	-daca avem o aplicatie mai complexa, care foloseste mai multe servicii, in loc sa rulam pe rand fiecare container in parte pt fiecare parte a aplicatiei, putem folosi docker-compose.yml si dupa sa dam direct o singura comanda docker-compose up 
+	
+	> docker run mmumshad/simple-webapp
+	> docker run mongodb
+	> docker run redis:alpine
+	> docker run ansible		
+	
+	-in loc sa le rulam pe fiecare pe rand asa, facem un fisier de configuratie .yml in care punem diferitele servicii si optiunile specifice si dam docker-compose up:
+	
+	docker-compose.yml 
+	
+	services:
+		 web:
+			image: "mmumshad/simple-webapp"
+		 database:
+			image: "mongodb"
+		 messaging:
+			image: "redis:alpine"
+		 orchestration:
+			image: "ansible"
+	
+	> docker-compose up 	
+	
+	-pt a porni tot stack ul applicatiei, e mai usor de pornit, implementat si mentinut, deoarece toate schimbarile sunt in docker-compose
+	-acest aproach este aplicabil doar pt a rula containere pe un singur host docker 
+	
+	-acum vom vedea un exemplu de aplicatie(sample voting app) creata de Docker pt a demonstra features-urile variate ale dockerului 
+	-foloseste o interfata pt user sa voteze si alta pt a arata rezultatele 
+	-are mai multe componente, ca si voting-app, care e o aplicatie web scrisa in python pt a da userului o interfata sa aleaga dintre caine si pisica
+	-cand facem o alegere, votul este stocat in redis, care in acest caz e o baza de date in-memory 
+	-acest vot este dupa aceea procesat de worker, un app scris in .Net 
+	-worker ia votul si il baga intr-o baza de date persistenta care e postgreSQL, care are doar un tabel cu doua coloane, cats si dogs si numarul voturilor pt fiecare si le incrementeaza 
+	-in cele din urma, rezultatul voturilor e afisat intr-un web interface, care este alta aplicatie web scrisa in nodejs 
+	-aceasta aplicatie result-app citeste count ul voturilor din baza de date postgreSQL si il afiseaza userului
+	-deci asta este arhitectura si data flow ul pt aceast sample voting application stack 
+	-dupa cum putem vedea, acest sample app este construit printr-o combinatie de diferite servicii, diferite paltforme de development ca si python, nodejs, .Net ...
+	-vom vedea cum putem sa pornim o astfel de aplicatie pe un singur docker engine, folosind prima oara comenzile docker run si dupa docker-compose
+	-sa zicem ca toate imaginile necesare aplicatiilor sunt deja build uite si disponibile pe docker repository 
+	-incepem cu data layer, prima oara rulam o instanta de Redis folosind comanda docker run:
+	
+	> docker run -d --name=redis redis 
+	
+	-adaugam parametrul -d pt a rula-o in backround si --name pt a denumi instanta redis
+	
+	-in continuare, dam deploy la baza de date postgreSQL ruland comanda docker run postgreSQL in modul detasat si punandu-i un nume:
+	
+	> docker run -d --name=db postgres
+	
+	-in continuare, incepem cu application services, vom da deploy la app-ul front end pt interfata de votare, ruland o instanta a imaginii de voting-app 
+	-rulam comanda docker run si o denumim vote, din moment ce e un web server, are un web UI care merge pe portul 80, vom mapa acest port la portul 5000 de pe docker host, ca sa ne putem conecta din browser 
+	
+	> docker run -d --name=vote -p 5000:80 voting-app 
+	
+	-acum vom da deploy la result web app care arata resultatele userului, pt asta dam deploy la un container folosind imaginea results-app si mapam portul 80 de pe container la 5001 de pe host, pt a accesa UI web a aplicatiei resulting-app pe un browser 
+	
+	> docker run -d --name=result -p 5001:80 result-app
+	
+	-in cele din urma, dam deploy la worker, ruland o instanta a imaginii worker:
+	
+	> docker run -d --name=worker worker 
+	
+	-desi toate instantele sunt running pe host, daca ne conectam pe browser cu ip ul host ului si port-ul 5000 al acestuia mapat la protul 80 al containerului ne va da eroare (192.168.56.101:5000)
+	-eroarea apare pt ca am rulat cu succes toate containerele docker, dar nu le am si link uit impreuna
+	-adica nu i am zis aplicatiei voting-app sa foloseasca aceasta instanta specifica redis 
+	-pot fi mai multe instante redis care ruleaza 
+	-nu le am zis la worker si la result-app sa foloseasca aceasta baza de date specifica postgreSQL pe care am rulat-o 
+	-pt a face aceste legaturi, vom folosi --links 
+	-link este o optiune din linia de comanda care poate fi folosita pt a link-ui 2 containere impreuna 
+	-de exemplu, web service-ul voting-app este dependent de service-ul redis cand porneste web server-ul 
+	-pt ca, dupa cum putem vedea in codul serverului web, avem o functie care cauta un serviciu redis care ruleaza pe redis host, dar containerul voting app nu poate gasi un host cu numele redis
+	-ca voting app sa stie de existenta serviciului redis, adaugam o optiune link cand dam run la voting-app contianer pt a o link-ui la containerul redis:
+	-adaugam in comanda run optinea --link si specificam numele containerului redis(care in acest caz e chiar redis), urmat de : si de numele host ului pe care il cauta voting-app(care de asemenea in acest caz e tot redis)
+	-numele host ului e tot redis deoarece in functia python def get_redis() din cod avem asa: 
+	g.redis = Redis(host="redis", db=0, socket_timeout = 5)
+	-de asta am adaugat un nume containerului cand l am rulat, ca sa ii folosim numele sa creeam un link 
+	
+	> docker run -d --name=vote -p 5000:80 --link redis:redis voting-app
+	
+	-asta defapt creeaza o intrare in ets host fileul din voting app container, adaugand o intrare cu host name ul redis cu ip ul intern al containerului redis 
+	172.17.0.2     redis 89cd8eb563da
+	
+	-in result-app avem codu: pg.connect('postgres://postgres@db/postgres', function(err, client, done) ...)
+	-dupa cum vedem, face un attempt sa se conecteze la o baza de date postgres pe host-ul db (@db)
+	
+	> docker run -d --name=result -p 5001:80 --link db:db result-app	//numele containerului postgres e primul parametru db din optiunea link, urmat de al doilea parametru db deoarece asa este host-ul pe care il cauta result-app, descris in cod ca si @db 	
+	
+	-app ul worker are nevoie de acces si la ambele baze de date atat redis cat si postgres
+	-deci adaugam doua link uri la app ul worker, unul pt a linkui redis si al doilea pt a link ui db-ul postgres 
+	-in containerul worker avem codul urm. unde se specifica host urile pe care le cauta sa se conecteze la ele:
+	
+	try {  Jedis redis = connectToRedis("redis");   Connection dbConn = connectToDB("db");   System.err.println(....); ...
+		
+	-deci vedem ca host urile descrise pt a fi cautate si a ne conecta la ele sunt pt containerul redus : "redis" si pt containerul postgres db: "db" 
+	
+	> docker run -d --name=worker --link db:db --link redis:redis worker
+	
+	-deci, observam ca avem in primul link numele containerului db, urmat de numele host ului cautat pt conectare din cod "db"
+	-si in al doilea link avem numele containerului redis, redis si numele host ului cautat in cod pt conectare "redis"
+	-!!! aflam acuma ca ie depreciata toata treaba asta cu link pentru comanda run(pt compose merge cica) si trb sa folosim docker network connect https://docs.docker.com/engine/network/ https://forums.docker.com/t/how-to-create-a-network-of-containers-that-can-communicate-with-each-other-interchangably/134292
+	
+	-odata ce avem toate comenzile docker run testate si pregatite, e usor sa facem docker-compose.yml
+	-incepem prin a lua numele containerelor(din comenzile docker run) si a le pune una sub alta si vom creea un key cu fiecare din ele 
+	-apoi sub fiecare nume specificam ce imagine sa folosim astfel: key ul este image si value este numele imaginii pe care o folosim (image: postgres:9.4)
+	-dupa ne uitam la comenzi si vedem ce alte optiuni au fost folosite, de ex am mapat port uri 
+	-asa ca creem o proprietate numita ports sub containerele respective, ca si image, asa:  ports: - 5000:80 (cu - punem dedesubt)
+	-in cele din urma, mai avem link urile pe care le punem similar porturilor: links:  - redis  - db  (- tot sub links)
+	-observam ca putem scrie doar - db ceea ce e similar cu - db:db (db = db:db)
+	-acum ca sa pornim tot application stack-ul venim cu command lineu la nivel cu fileu docker-compose.yml si dam comanda: > docker-compose up 
+	-cand am inceput cu exemplu appului asta de voting ne am asumat ca toate imaginile sunt deja builduite 
+	-din toate cele 5, stim ca redis si postgres sunt deja disponibile pe docker hub, sunt imagini oficiale de la redis si postgres 
+	-celelalte 3 sunt aplicatia noastra, nu e necesar sa fie deja builduite si disponibile pe docker registry 
+	-daca am vrea sa instruim docker-compose sa dea run la un docker build, in loc sa dea pull la imagine, putem sa inlocuim linia cu image: cu linia build: si sa specificam locatia folderului care contine codul appului si un Dockerfile cu instructiunile pt a da build la imaginea Docker 
+	image: voting-app  ->  build: ./vote
+	image: result  ->  build: ./result 
+	image: worker  ->  build: ./worker
+	-in acest exemplu, pentru aplicatia voting-app am codul aplicatiei(app.py) si Dockerfile ul in folderul vote 
+	-acum, cand rulam docker-compose up, prima oara va da build la imagini, le va da un nume temporar si apoi va folosi imaginile sa dea run la containere folosind optiunile specificate anterior(port mapping, links)
+	
+	
+	> docker run -d --name=redis redis 
+	> docker run -d --name=db postgres:9.4
+	> docker run -d --name=vote -p 5000:80 --link redis:redis voting-app
+	> docker run -d --name=result -p 5001:80 --link db:db result-app
+	> docker run -d --name=worker --link db:db --link redis:redis worker
+	
+	redis:
+	  image: redis
+	db:
+	  image: postgres:9.4
+	vote:
+	  image: voting-app   // -> build: ./vote
+	  ports:
+	    - 5000:80
+	  links:
+	    - redis
+	result:
+	  image: result-app   // ->  build: ./result 
+	  ports:
+	    - 5001:80
+	  links:
+	    - db
+	worker:
+	  image: worker    // -> build: ./worker
+	  links:
+	    - redis
+		- db 
+	
+	-avem mai multe versiuni si format uri pt docker-compose.yml 
+	-cel folosit mai sus este versiunea originala a docker-compose file si anume version: 1
+	-aceasta a avut un nr de limitari, ca de ex da am vrea sa dam deploy la containere in alt newtwork, altul decat default bridge network, nu aveam cum sa specificam asta in aceasta versiune de dockefile
+	-de asemenea, sa zicem ca avem un dependency sau un startup order de vreun fel, de ex, containerul data base trebuie pornit primul si doar dupa ar trebui pornita voting applicationu, nu aveam cum sa specificam asta in version 1 a docker-compose file 
+	-suportul pt acestea a venit in version 2, cu tot cu schimbari la formatul file ului 
+	-nu mai trb sa specificam informatiile stack ului direct ca inainte, sunt toate incapsulate in sectiunea services: 
+	-deci, creeam o propietate numita services: la inceputu file ului si mutam toate serviciile sub ea 
+	
+	version: 2
+	services:
+		redis:
+		  image: redis
+		  
+		db:
+		  image: postgres:9.4
+		  
+		vote:
+		  image: voting-app   // -> build: ./vote
+		  ports:
+			- 5000:80
+		  depends_on:
+		    - redis
+	
+	
+	-vom folosi aceeasi comanda docker-compose up pt a porni stack ul aplicatiei 
+	-ca sa folosim de la versiunea de dockerfile 2 in sus, trebuie sa specificam la inceputul fileului, in cazu de fata, version: 2
+	-alta diferenta din version 1 este la networking: docker ataseaza toate containerele pe care le ruleaza la default bridged network si apoi putem folosi link uri ca sa pornim comunicarea dintre doua containere ca si mai intainte 
+	-in vers 2, docker-compose creeaza automat o conexiunde bridged dedicata pt aceasta aplicatie si apoi ataseaza toate containerele la aceast nou network 
+	-toate containerele pot apoi sa comunice intre ele folosindu-si service name-urile lor
+	-deci nu avem nevoie sa folosim link uri in vers 2 a docker-compose, le putem sterge pe toate link urile din version 1 cand facem trecerea la version 2
+	-in cele din urma, v2 introduce depends on feature, daca vrem sa specificam un startup order de exemplu, voting web aplciation este dependent de redis service, deci trebuie sa ne asiguram ca e pronit primu containerul redis si doar dupa e pornit si voting web application 
+	-putem adauga un depdends on property la voting app si sa indicam ca depinde de redis: depends_on:  - redis
+	-apoi avem version 3 care are aceeasi structura ca si version 2, adica trebuie sa ii scriem versiunea la inceput ul file ului version: 3 , si sectiunea de services ca in v2 , v3 vine si cu suport pt docker swarm
+	
+	-sa zicem ca vrem sa modificam structura voting app, separand traficul generat de useri de traficul intern al aplciatiei, astfel incat sa avem un frontend network dedicata traficului de la useri si un backend network dedicata traficului din aplicatie 
+	-apoi conectam aplicatiile cu care au treaba userii, adica voting app si result app la frontend network si restul componentelor la un internal backend network 
+	-deci in docker-compose file ul nostru, primul lucru de facut daca vrem sa folosim network-uri e sa ne definim network urile pe care le vom folosi 
+	-in cazu nostru, avem 2 network uri frontend si backend, deci creeam o noua proprietate numita networks dupa services in docker compose file 
+	-apoi, sub fiecare serviciu creeam o proprietate netowrks si dam o lista cu network urile la care trebuie sa fie atasat serviciul
+	-redis, postgres db si worker trebuie conectate doar la backend, pt ca doar in backend au treaba transmitand datele de la una la alta, ele sunt aplicatii dedicate de backend 
+	-in vazu aplicatiilor frontend ca si voting-app si result-app trebuie sa fie atasate si la backend dar si la frontend, pt ca au treaba si cu date din back end pe care trebuie sa le preia si dupa trebe sa le si afiseze in UI adica in frontend
+	
+	
+	version: 2
+	services:
+		redis:
+		  image: redis
+		  netowrks:
+			 - back-end
+			 
+		db:
+		  image: postgres:9.4
+		  netowrks:
+			 - back-end
+			 
+		worker:
+		  image: worker
+		  networks:
+		     - back-end
+			 
+		vote:
+		  image: voting-app  
+		  netowrks:
+			 - front-end
+			 - back-end
+		  
+		result:
+		    image: result 
+		    netowrks:
+			 - front-end
+			 - back-end
+		  
+	networks:
+	    front-end:
+		back-end:
+
+DEMO - Example voting app
+
+	-git ul cu tot app ul https://github.com/dockersamples/example-voting-app
+	-dam git clone la link ca sa il avem local pe host ul de docker 
+	-incepem prin a da delpoy la voting-app, pt asta trei sa facem o imagine, deci mergem in folderu vote: cd vote 
+	-ne uitam in dockerfile totu pare ok asa ca ne apucam sa dam build la imagine ruland comanda:
+	> docker build . -t voting-app
+	
+	-daca rulam comanda docker images, o vom vedea pe a noastra acolo 
+	-acum ca avem imaginea build uita, putem porni un container bazat pe aceasta, la care mapam si port ul de pe host 5000 la cel pe care asculta aplicatia noastra web 80:
+	> docker run -p 5000:80 voting-app 
+	
+	-daca mergem pe browser la: 192.168.56.102:5000 si vedem ca aplicatia web merge si ne apar optiunile de votare cats si dogs 
+	-daca apasam pe un vot, va dura ceva pana da internal server error, daca ne intoarcem la terminal unde am pornit containeru, vedem ca crapa la redis.rpush('votes', data) 
+	-deci, practic nu poate sa faca o conexiune cu redis, pt ca nu am pornit o instanta redis 
+	-acuma pornim o instanta de redis pe care o denumim redis si o rulam in backround. Va incepe prin a da pull la imaginea oficiala redis:
+	> docker run --name=redis -d redis
+	
+	-oprim prima instanta de voting-app si o rulam iarasi dar de data aceasta cu optiunea --link sa o link uim cu instanta redis 
+	
+	> docker run -p 5000:80 --link redis:redis voting-app
+	
+	-ne intoarcem la browser la 192.168.56.102:5000 si daca dam refresh si incercam sa votam din nou, de data asta va merge, deoarece avem si instanta redis pornita si conectata la voting-app
+	
+	-acuma dam deploy la worker, dar ca sa putem face asta, trebuie mai intai sa dam deploy la o instanta postgres 
+	-la nivel cu folderul vote, avem docker-compose file pt a porni stack ul direct si in acesta avem versiunea imaginii postgres de care avem nevoie pt deploy la container in tutorial e una si pe git e alta (image: postgres:15-alpine pe git si pe tutorial e postgres:9.4)
+	
+	> docker run -d --name=db postgres:9.4
+	
+	-ii dam run in modul detasat si daca dam docker ps vedem ca avem 3 instante pornite 
+	-acum putem porni si containerul worker, mai intai verificam Dockerfile-ul din folderul worker sa ne asiguram ca e ok si sa dam build la imagine:
+	
+	> docker build . -t worker-app 
+	
+	-daca dam docker images vedem ca avem toate iamginile pulled
+	-acum putem rula comanda pt a porni containerul worker-app, pe care trebuie sa il link-uim la containerele de redis si postgres, deoarece ia date din redis si le baga in postgres, ca un intermediar
+	
+	> docker run --link redis:redis --link db:db worker-app
+	
+	-ultimul pas este sa dam build si deploy la resulting app, asa ca mergem in folderul worker si verificam docker file ul sa fie ok si de aici dam comanda:
+	
+	> docker build . -t result-app 
+	
+	-acum daca dam iar docker images, vedem ca avem o noua imagine worker-app care are la baza nodejs si acuma dam run la container pe baza acestei imagini:
+	-deoarece este un server web, are expus portul 80 si acolo da listen, deci il vom mapa la portul 5001 si trebuie sa adaugam si un link, deoarece result-app trebuie link uit la postgres db, ca ne afiseaza numarul de voturi preluat din db 
+	
+	> docker run -p 5001:80 --link db:db result-app 		// primul db e numele containerului de postgres (docker run -d --name=db postgres:9.4) si al doilea db e host ul pe care il cauta worker-app in codul sursa din server.js ( 'postgres://postgres:postgres@db/postgres')
+	
+	-rulam comanda si vedem ca aplicatia a pornit si e conectata la db, ceea ce e bine 
+	-putem merge pe browser si sa ne conectam la 192.168.56.102:5001 si o sa vedem pagina result unde avem 100% voturi pt cats deoarece am votat doar o data cu cats 
+	-putem merge inapoi(pe 192.168.56.102:5000) sa ne schimbam votul cu dogs(in pagina voting-app) si o sa vedem ca se schimba instant result page 
+	-deci de fiecare data cand schimbam votul face tot ciclul: datele merg la redis, worker le proceseaza si da update la baza de date postgres si e aratat in cele din urma in result page 
+	
+	
+DEMO - Example voting app cu Docker Compose 
+
+	-mai nou, Docker Compose vine direct instalat cu Docker Desktop si nu mai e nevoie sa il instalam noi manual pe acesta, conform documentatiei https://docs.docker.com/compose/install/
+	-dar, daca nu avem isntalat docker desktop si avem doar docker engine si docker cli, putem instala plug-inu docker compose folosind repository sau manual asa: https://docs.docker.com/compose/install/linux/#install-using-the-repository
+	-acum, dam docker ps si vedem toate containerele pornite de tutorialul trecut si dam docker stop si punem primele doua cifre din fiecare id una dupa alta sa le oprim pe toate dintr o singura comanda 
+	-in root ul proiectului, adica deasupra folderelor cu aplicatiile vom creea un docker compose file: # cat > docker-compose.yml si incepem prin a lista serviciile folosite de aplicatie 
+
+	redis:
+	  image: redis 
+	  networks:
+	    - back-end
+
+	db:
+	  iamge: postgres:9.4 
+	  networks:
+	    - back-end
+
+	vote:
+	  image: voting-app 
+	  ports:
+	    - 5000:80
+	  links:     //optional doar pt exemplu
+	    - redis
+      networks:
+	    - front-end
+		- back-end
+
+	worker:
+	  image: worker-app
+	  links:    //optional doar pt exemplu
+	  	- db
+	  networks:
+	    - back-end
+
+	result:
+	  image: result-app
+	  ports:
+	    - 5001:80
+	  links:	//optional doar pt exemplu
+	  	- db
+	  networks:
+	    - front-end
+		- back-end
+
+	networks:
+	  front-end:
+	    driver: bridge
+	  back-end:
+	    driver: bridge
+
+	-dupa care, vom da edit la file: # vi docker-compose.yml si scriem imaginile folosite pt aceste servicii 
+	-dupa care, trebuie sa updatam port mappings urile, adaugand proprietatea ports: la serviciile din front end vote si result cu port urile 5000 si 5001 de pe host, mapate pe portu 80 de pe containere 
+	-dupa care, trebuiesc creeate link urile(care sunt depreciate si mai nou folosim networks) 
+
+	-mai pe nou folosim networks astfel: prima oara creeam un network de tip bridge pt ca containerele sunt pe acelasi docker host:
+	-dupa, cand rulam containerele ne conectam la network ul creeat anterior cu optinea --netowrk:
+
+	# docker network create my_bridge_network
+	# docker run -d --name vote --netowrk my_bridge_network voting-app
+	# docker run -d --name worker --netowrk my_bridge_network worker-app
+	
+	-putem conecta la un network si containere care sunt deja running astfel:
+
+	# docker network connect my_bridge_network voting-app
+
+	-pt a creea un docker-compose file in care sa includem aceste instructiuni de creeare a unui network si connectare a containerelor la acesta, facem asa:
+	-descriem un serviciu numit networks: my_bridge_network:  diver: bridge 
+	-cele doua tpuri de network sunt bridge(pt a coencta containere de pe acelasi host) si overlay(pt a conecta containere de pe mai multe host uri diferite)
+	-deci, vom avea doua network uri front-end si back-end de tip bridge, daca nu mentionam in definirea network urilor dirver ul bridge, acestea vor fi bridge by default 
+	-dupa asta, adaugam proprietatea networks la fiecare serviciu(in rand cu image:) urmat de numele network ului la care vrem sa il conectam: networks
+	-acum, dam save la file si putem rula # docker compose-up  o sa vedem ca prefixeaza toate containerele cu numele folderului root pt ca suntem in acest folder cand dam comanda 
+	-acum ne putem conecta la voting app page si result page 192.168.56.102:5000 / 5001 si putem sa votam si vedem ca apare un results
+	
+	-docker compose ul de mai sus e version 1 si vrem sa il facem version 3 in docker-compose.yml 
+	-daca executam compose fileu sa mearga, o sa ne dea o eroare, pt ca trebuie sa specificam o parola pt db 
+	-ca sa reparam, specificam proprietatile environment: POSTGRESS_PASSWORD: postgres si POSTGRESS_USER: postgres sub image: la db , deoarece woker app si result app sunt hardcodate sa foloseasca postgres pt username si password pt a se conecta la containerul db 
+	-acuma va merge, putem folosi localhost:5000 / 5001 pt a deschide voting app si result app
+	
+Lab Docker Compose:
+
+	-ca sa creeam un container numit redis cu imaginea redis:alpine in modul detasat, executam comanda:
+	# docker run --name=redis -d redis:alpine
+	
+	-creeam un container simplu numit clickcounter cu imaginea kodekloud/click-counter pe care o link uim la containerul redis si sa il expunem la portul host 8085, aplicatia clickcounter merge pe portul 5000
+	# docker run --name=clickcounter --link redis:redis -p 8085:5000 -d kodekloud/click-counter 
+	
+	-acum stergem containerele creeate, mai intai dam docker ps ca sa aflam id urile si dam docker stop 52 e7 pt a le opri pe ambele containere deodata 
+	-acuma le putem sterge abea, dupa ce le am oprit cu # docker rm 52 e7 
+	
+	-acum sa creeam un docker-compose.yml in folderul /root/clickcounter dam cd in acest folder si # cat > docker-compose.yml 
+	-fileu trb sa contina serviciul redis cu imaginea redis:alpine si serviciul clickcounter care merge pe portu 5000 si trb mapat la cel de pe host 8085y
+
+	version: "3.9"
+
+	services:
+	  redis:
+	    image: redis:alpine
+
+	  clickcounter: 
+	    image: kodekloud/click-counter
+		ports:
+		  - 8085:5000
+	
+	
+Docker Registry 
+
+	-este un repository central pentru toate imaginile docker 
+	-de ex, rulam comanda docker run ngnix	, numele este nginx, care respecta conventia de nume docker
+	-aici, nginx este numele imaginii sau al repository ului 
+	-nginx respecta conventia de naming docker, cu numele full fiind library/nginx 
+	-prefixu library e folosit cand nu e specificat niciun cont sau repository, indicand o imagine oficiala docker hub(library e repository ul oficial docker hub pt iamgini oficiale si nu trebuie specificat cand dam comanda run)
+	-username-ul este de obicei numele contului de docker hub, sau daca este o organizatie, numele organizatiei 
+	-daca ne am creea propriul cont si propriile repository uri sau imagini sub el, atunci am folosi un pattern similar
+	-toate imaginile sunt stored si pulled din registry-ul docker Hub, de exemplu  
+	-din moment ce nu am specificat numele DNS al acestuia, se pune by default DNS-ul Docker Hub-ului in fata user accountului library:
+
+	docker.io/library/nginx 
+
+	-mai sunt si alte registries populare, de ex google registry: gcr.io/ unde sunt multe imagini kubernetes de ex:
+
+	gcr.io/kubernetes-e2e-test-images/dnsutils 
+
+	-acestea sunt imagini publice pe care oricine le poate downloada si accesa 
+	-cand avem aplicatii facute in-house, care nu ar trebui sa fie disponibile publicului, o solutie buna ar fi host uirea unui registry privat intern 
+	-multe servicii cloud ca si AWS, Azure sau GCP ofera un private registry by default cand deschidem un cont la ele
+	-cu oricare din solutiile acestea docker hub sau google registry sau registrul nostru intern privat, putem alege sa facem un repository privat ca sa poate fi accesat doar folosind un set de credentiale  
+	-din perspectiva Docker pt a rula un container folosind o imagine dintr un private registry, trebuie mai intai sa ne logam in private registry-ul nostru, folosind comamnda:
+	
+	# docker login private-registry.io    ,in care ne bagam credentialele 
+
+	-dupa ce ne logam cu succes, rulam aplicatia folosind registry ul privat ca parte din numele imaginii astfel:
+
+	# docker run private-registry.io/apps/internal-app 
+	
+	-DNS-ul este private-registry.io , numele contului este apps si numele imaginii este internal-app 
+	-daca nu ne am logam in private registry, va veni inapoi zicand ca imaginea nu poate fi gasita
+	-deci tinem minte sa ne dam log in mereu inainte de a da pull sau push pe un private registry 
+
+	-docker registry este un app de sinestatator si este disponibil ca si o imagine docker numita registry si expune api ul pe portul 5000 
+	-deci rulam un custom registry pe un container mapat pe portul 5000 pe docker host:
+
+	# docker run -d -p 5000:5000 --name=registry registry:2
+
+	-pt a putea da push la o imagine pe acest registry, trebuie sa tagam imaginea cu URL-ul registry ului privat:
+	-in acest caz, din moment ce ruleaza pe acelasi docker host, putem folosi localhost:5000 urmat de numele iamginii 
+
+	# docker image tag my-image localhost:5000/my-image 
+
+	-acum putem da push la imagine in registru privat local al nostru folosind comanda docker push si noul nume al imaginii cu informatiile docker registry in el:
+
+	# docker push localhost:5000/my-image
+
+	-de acuma, putem da pull la imagine de oriunde din acest network folosind localhost daca suntem pe acelasi host sau ip ul(sau domain nameu) docker host ului daca accesam de pe alt host din acelasi network:
+
+	# docker pull localhost:5000/my-image 
+	# docker pull 192.168.56.100/my-image 
+	
+LAB Docker Registry 
+
+	-Docker Registry este un sistem de stocare si distribuire pt imaigini Docker cu numele setat 
+	-by default, docker engine interactioneaza cu DockerHub
+	-DockerHub is a hosted registry solution by Docker Inc 
+	-pe langa repo uri private si publice, el ofera de asemenea build uri automate, integrare cu solutii source control ca si Github si Bitbucket
+	-pt a face Login pe un self-hosted registry, folosim comanda docker login [SERVER]
+	
+	Task: 
+
+	Let practice deploying a registry server on our own.
+	Run a registry server with name equals to my-registry using registry:2 image with host port set to 5000, and restart policy set to always.
+
+	Note: Registry server is exposed on port 5000 in the image.
+
+
+	Here we are hosting our own registry using the open source Docker Registry.
+	
+	# docker run -d -p 5000:5000 --name=my-registry --restart=always registry:2
+	
+	Task:
+
+	Now its time to push some images to our registry server. Let's push two images for now .i.e. nginx:latest and httpd:latest.
+
+	Note: Don't forget to pull them first.
+
+	To check the list of images pushed , use curl -X GET localhost:5000/v2/_catalog
+	
+	-prima oara trebuie sa dam pull la imagine si dupa sa o tagam cu numele localhost:5000/<numele imaginii> si abea apoi sa ii dam si push pe registrul local my-registry 
+	
+	# docker pull nginx:latest 
+
+	# docker image tag nginx:latest localhost:5000/nginx:latest 
+
+	# docker push localhost:5000/nginx:latest 
+
+	-pt a vedea imagine pushate pe registry serveru nostru local my-registry folosim comanda:
+
+	# curl -X GET localhost:5000/v2/_catalog 
+
+	-repetam aceeasi pasi si pt imaginea httpd:latest
+
+	# docker pull httpd:latest
+
+	# docker image tag httpd:latest localhost:5000/httpd:latest
+
+	# docker push localhost:5000/httpd:latest 
+	
+	Task:
+
+	Let's remove all the dangling images we have locally. Use docker image prune -a to remove them. How many images do we have now?
+
+	Note: Make sure we don't have any running containers except our registry-sever.
+
+	To get list of images use: docker image ls
+	
+	-dam docker images pt a vedea toate imaginile pulled, dupa dam docker ps sa ne asiguram ca nu e running niciun container asociat vreunei imagini pe care vrem sa o stergem, dupa dam comanda descrisa in task pt a sterge toate imaginile fara containere running asociate
+	
+	# docker images
+
+	# docker ps 
+
+	# docker image prune -a 
+
+	Task: 
+
+	Now we can pull images from our registry-server as well. Use docker pull [server-addr/image-name] to pull the images that we pushed earlier.
+
+	In our case we can use: docker pull localhost:5000/nginx
+
+	-acum putem da pull la imagini pe care le am pushat mai devreme pe serverul nostru registry(my-registry) cu comanda pull si tag ul imaginii 
+	-putem da comanda # curl -X GET localhost:5000/v2/_catalog pt a verifica la ce imagini putem da pull de pe registry ul nostru 
+
+	# docker pull localhost:5000/nginx:latest 
+
+	Task: 
+
+	Let's clean up after ourselves.
+	Stop and remove the my-registry container.
+
+
+	-stergem cele doua imagini carora le am dat pull anterior pt test:
+
+	# docker image prune -a 
+
+	# docker ps    //pt a vedea id u containerului my-registry 
+
+	# docker stop a44 	//pt a opri containerul my-registry 
+
+	# docker ps -a    //pt a vedea containerele oprite 
+
+	# docker rm a44 	//pt a sterge containerul oprit cu idu a44....
+
+
+Docker Engine 
+
+	-Docker Engine se refera efectiv la un host cu Docker instalat pe aceasta 
+	-cand instalam Docker pe un host de linux, instalam defapt 3 componente diferite: Docker Deamon, REST API si Docker CLI  
+	-Docker Daemon este un proces de backround care manageuieste obiecte Docker ca si imaginile, containerele, volumele  si network urile 
+	-serverul Docker REST API este interfata API pe care o folosesc programele pt a vorbi cu Deamon si sa-i ofere instructiuni
+	-ne am putea creea propriile tool uri folosind acest REST API 
+	-Docker CLI este efectiv interfata linii de comanda pe care am tot folosit-o pana acum sa performam actiuni ca si pornirea de containere, oprirea de containere, distrugerea de imagini, etc..
+	-Docker CLI foloseste REST API sa interactioneze cu Docker Daemon 
+	-Docker CLI nu trebuie neaparat sa fie pe acelasi host cu celelalte doua(REST API si Docker Daemon), poate fi pe alt sistem ca de ex un laptop si poate sa totusi sa lucreze cu un Docker Engine remote(rest api si daemon)
+	-pur si simplu, in comanda docker folosim optiunea -H si specificam adresa si port-ul Docker engine-ului remote:
+
+	# docker -H=remote-docker-engine:2375 
+
+	-de ex, sa rulam un container bazat pe nginx pe un Docker host remote, rulam comanda:
+
+	# docker -H=10.123.2.1:2375 run nginx 
+
+	-Docker foloseste namespace-uri sa izoleze workspace: Process ID, Network, InterProcess communication, Mount si Unix Timesharing systems sunt creeate in propriul lor namespace si deci, ofera izolare printre containere 
+	-o tehnica de izolare a namespace-urilor este Process ID namespace
+	-mereu cand un sistem Linux booteaza, incepe doar cu un proces cu un id process de 1 (PID: 1)
+	-acesta este root process si porneste toate celelalte procese din sistem (PID: 2 , PID: 3 , PID : 4), deci acestea sunt subprocesele primului proces creat cu PID: 1
+	-pana cand sistemul booteaza complet, avem mai multe procese running. Putem vedea asta ruland comanda ps pt a lista toate procesele running 
+	-Id-urile proceselor sunt unice, deci doua procese nu pot avea acelasi process ID 
+	-daca ar fi sa creeam un container, care e efectiv ca si un child system al sistemului curent(linux), child system trebuie sa creada ca este un sistem independent si are propriul lui set de procese, care provin de la root process(PID: 1)
+	-dar noi stim ca nu exista hard isolation intre containere si host, deci procesele care ruleaza inauntrul containerului sunt defapt procese care ruleaza pe host si deci doua procese nu pot avea acelasi process ID de 1
+	-aici intervin namespace-urile. Cu process id namespaces, fiecare proces poate avea multiple ID-uri de procese asociate acestuia, de ex, cand procesele pornesc in container, sunt defapt doar alt set de procese pornite pe sistemul linux de baza(host) care primesc urmatoarele ID-uri de procese disponibile(PID: 5, PID: 6 in cazu nostru)
+	-aceste procese primesc de asemenea alt ID de proces incepand cu PID: 1 in namespaceu container-ului care este vizibil doar in interiorul containerului  
+	-si astfel, containerul crede ca are propriul lui root process tree si este un sistem independent, deci, practic, subprocesele PID: 5 si PID: 6, de pe host, sunt cele de pe container: PID: 1 cu subprocesul PID: 2
+	
+	-sa zicem ca rulam un server nginx ca si un container, stim ca containerul nginx ruleaza un serviciu nginx 
+	-daca listam toate serviciile dinauntrul containerului docker, vedem ca serviciul nginx ruleaza cu un process ID de 1(PID: 1). Acesta este process ID-ul serviciului dinauntrul namespace-ului containerului.
+	-daca listam serviciile de pe docker host,  vom vedea acelasi serviciu, dar cu un ID de proces diferit. Asta indica faptul ca toate procesele sunt defapt running pe acelasi host, dar separate in containerele lor folosind namespace-uri.
+	-deci am invatat ca host ul docker si containerele impart aceleasi resurse de sistem, ca de ex CPU si memorie
+	-by default, nu e nicio restrictie pe cat de multe resurse poate un container folosi si deci, un container poate ajunge sa utilizeze toate resursele unui underlying host 
+	-dar este o cale sa restrictional cantitatea de CPU sau memorie pe care un container o poate folosi 
+	-docker foloseste cgroups(control groups) pt a restrictiona cantitatea de resurse hardware alocate fiecarui container 
+	-by default, accesul fiecarui container la cpu-ul hostului este nelimitat. Putem seta diferite limitari pt a limita accesul unui container la cpu-ul host ului 
+	-asta poate fi facut dand optiunea --cpus in comanda docker run prin care specificam cat de mult din resursele disponibile ale CPU-ului hostului putem folsi. 
+	-daca avem un singur CPU si dam o valore de .5, containerul nu ia mai mult de 50% din CPU-ul host-ului in fiecare secunda 
+	
+	# docker run -it --cpus=.5 ubuntu /bin/bash 
+	# docker run --cpus=.5 ubuntu 
+
+	-optiunea --cpuset-cpus limiteaza cpu uri specifice sau coruri pe care le poate folosi un container
+		-o lista separata prin virgula(daca vrem sa luam doar cpu-urile scrise in lista) sau dash - (daca vrem sa luam de la primul cpu din lista pana la ultimul) daca avem mai mult de un cpu. Primul CPU e numerotat cu 0
+		-de ex, o valoare valida ar putea fi: 0-3(pt a folosi primu, al doilea, al treilea si al patrulea CPU) sau 1,3(pt a folosi primul si al patrulea CPU)
+
+	# docker run --cpuset=0,2 (pt a folosi doar primul si al treilea cpu)
+	# docker run --cpuset=1-3 (pt a folosi al doilea al treilea si al patrulea cpu) 
+
+	-e important sa nu lasam un running container sa consume prea mult din memoria hostului 
+	-pe host uri linux, daca kernelu detecteaza ca nu mai e suficienta memorie sa performeze functii importante de sistem da eroarea Out Of Memory Exception si incepe sa opreasca procese pt a elibera memoria 
+	-orice proces poate fi oprit, inclusiv Docker si alte aplciatii importante. Asta poate ca efectiv sa dea jos tot sistemul daca procesul gresit e oprit.
+	-Docker ajusteaza OOM priority pe Docker daemon astfel incat sa fie putin probabil ca acesta sa fie oprit decat celelalte procese de pe sistem 
+	-OOM priority pe containere nu e ajustata, deci asta face sa fie mai probabil ca un container individual sa fie oprit decat Docker daemon sau alte procese de sistem sa fie oprite
+	-putem reduce riscurile acestea prin: a face teste sa intelegem cerintele de memorie ale apicatiei noastre inainte sa o lansam in productie, sa ne asiguram ca appu nostru ruleaza doar pe host uri cu resurse adecvate, sa limitam cantitatea de memorie pe care containerul nostru o poate folosi: 
+	-docker poate seta hard limits sau soft limits
+	-hard limits nu lasa containerul sa foloseasca mai mult decat o cantitate fixa de memorie(--memory)
+	-soft limits lasa containerul sa foloseasaca cata memorie are nevoie pana cand kernelu detecteaza low memory pe host 
+	-majoritatea optiunilor primesc ca si parametru un integer pozitiv urmat de b, k, m, g care indica bytes, kilobytes, megabytes sau gigabytes
+
+	-Optiunea -m sau --memory= : cantitatea maxima de memorie pe care o poate folosi un container. Daca seteam aceasta optiune, valoarea minima acceptata este 6m(6 megabytes). Adica trebuie sa setam valoarea de cel putin 6 mega.
+	
+	# docker run --memory=300m ubuntu 		//ii permitem containerului pe baza imaginii ubuntu sa foloseasca maxim 300 de megabytes de pe host 
+
+	-Optiunea --memory-swap  :  cantitatea maxima de memorie pe care containerul are voie sa ii dea swap pe disk 
+		-aceast flag modifier are insemnatate doar daca --memory este de asemenea setat 
+		-utilizarea swap permite containerului sa scrie cerintele de memorie in exces pe disc atunci cand containerul a epuizat toata memoria RAM disponibila 
+		-daca optiunea --memory-swap are valoarea unu int pozitiv, atunci si --memory si --memory-swap trebuie sa fie setate
+		- --memory-swap reprezinta cantitatea totala de memorie si swap care poate fi folosita si --memory controleaza cantitatea folosita de memoria non-swap. Deci daca --memory=300m si --memory-swap=1gb atunci containerul poate folosi 300mb de memorie si 700mb(1gb - 300mb) swap
+		-daca --memory-swap este setat la 0, atunci setarea este ignorata si valoarea e considerata ca si nesetata
+		-daca --memory-swap e setata la aceeasi valoare ca si --memory si --memory este setata la un int pozitiv,  containerul nu are acces la swap 
+		-daca --memory-swap nu e setata si --memory e setata, containerul poate folosi la fel de mult swap ca si --memory, daca containerul host are memoria swap configurata.
+			-de ex, daca --memory=300m si --memory-swap nu e setata, atunci containerul poate folosi 600mb in total de memorie si swap 
+		-daca --memory-swap este explicit setata la -1, containerul are voie sa foloseasca swap nelimitat, adica cantitatea totala disponibila pe sistemul host 
+		-daca --memory si --memorry-swap sunt setate la aceeasi valoare, asta previne containerele din a folosi memorie swap deloc.
+			-asta deoarece --memory-swap este cantitatea combinata de memorie si swap care poate fi folosita, in timp ce --memory este doar cantitatea de memorie fizica care poate fi folosita 
+
+	-mai multe detalii despre cpu si memory aici: https://docs.docker.com/engine/containers/resource_constraints/#--memory-swap-details
+
+Docker PID - DEMO (Namespace Process IDs)
+
+	-ca si in ultima lectie, avem un sistem Linux care e un Docker Engine care are proproiul lui root process cu process id 1 care a pornit mai multe procese cu alte process ids
+	-si pe acelasi linux host avem un container docker care are proriul set de procese si procesul root al lui cu process idul 1 
+	-dar dupa cum am vazut mai devreme, procesul din container cu idu 1 este de fapt doar alt proces running pe underlying linux system care are process idu lui separat, care in cazu asta este 5 
+	-deci, in acest demo vom rula un container pe un host docker si vom compara idul aceluias proces din container cu al prcesului de pe hostu linux 
+	-cautam pe docker hub imaginea pt tomcat si cautam instructiunile pt a rula imaginea:
+
+	# docker run -it --rm -p 8888:8080 tomcat:9.0		
+
+	-optiunea --rm este sa ii zicem lui docker sa stearga containerul(file systemu lui basically) dupa ce il oprim sau dupa ce isi termina task-ul, se foloseste de obicei pt teste sau pt a rula aplicatii pt o scurta perioada de timp si sa nu se facem griji cu memoria sau asa...
+	-dam run la comanda in cmd si va porni serverul si il putem accesa pe browser asa: http://localhost:8888 sau http://192.168.56.101:8888 , depinde daca suntem pe host(putem folosi localhost) sau in afara acesuita(trebe sa folosim ipu hostului)
+	-putem vedea apache tomcat webpage, deci asta confirma ca docker containerul e running
+	-ne intoarcem in cmd si il oprim pt ca nu l am rulat in backround, asa ca dam ctrl c sa il oprim 
+	-rulam aceeasi comanda cu optiunea -d in loc de -it:
+
+	# docker run -d --rm -p 8888:8080 tomcat:9.0
+
+	-daca dam comanda docker ps vom vedea ca, containerul e running si daca intram pe browser la link urile de mai sus, vedem pagina tomcat apache din nou 
+	-acum vom rula o comanda inauntrul containerului docker, deci putem folosi comanda # docker exec <idu containerului> pt a executa o comanda inatunrul containerului docker
+
+	# docker exec 5a5f912e0f0e ps -eaf 
+
+	-comanda ps -eaf listeaza toate procesele care ruleaza pe acel container 
+	-vedem ca este doar un proces care ruleaza pe acest container, din moment ce e un container tomcat ruleaza un proces tomcat cu process id 1(PID: 1)
+	-sub coloana CMD a procesului vedem pathul /docker-java-home/jre/bin/java
+	-dam aceeasi comanda ps -eaf pe docker host si o combinam cu | cu comanda de cautare grep docker-java-home (practic cautam acelasi proces pe host) si ar trebui sa vedem acelasi proces ruland pe docker host 
+
+	# ps -eaf | grep docker-java-home
+
+	-vom vedea acelasi proces cu acelasi path la CMD si continuarea comenzii, dar are un alt PID: 27700
+	-deci asta ne va spune ca acelasi proces e running in docker container cu PID: 1 dar si pe docker host cu alt process ID de 27700
+	-deci cu namespace uri putem da multiple process id-uri aceluias proces, asadar facem containerul sa creada ca este un root process al containerului respectiv, pe cand de fapt este doar alt proces care e running pe underlying docker host 
+	-deci, containerization tehnology premite acestui proces sa fie izolat si pornit inauntrul unui container folosind namespace-uri
+	-deci e running cu PID 1 inauntrul containerului si afara, pe docker host, e alt proces cu alt id 27700
+
+Docker Storage 
+
+	-cand instalam Docker pe un sistem, el creeaza structura aceasta de foldere la /var/lib/docker si avem multe foldere sub docker numite aufs, containers, image, etc
+	-aici Docker isi pune toate datele by default. Prin data intelegem file uri legate de imagini si containere care sunt running pe docker host 
+	-de ex, toate feile urile legate de containere sunt puse sub folderul containers si file urile legate de imagini sunt puse sub folderul images si orice volume creeate de containere docker sunt puse sub folderu volumes 
+	-sa ne reamintim ca docker atunci cand build uim imagini, le face intr o arhitectura stratificata: fiecare linie de instructiune din Dockerifle creeaza un nou strat in imaginea Docker doar cu schimbarile din stratul anterior 
+	-de ex, primul strat(FROM Ubuntu) este un sistem de operare de baza Ubuntu urmat de a doua instructiune care creeaza al doilea strat care instaleaza toate pachetele apt (RUN apt-get update && apt-get -y install python)
+	-si apoi a treia instructiune care creeaza al treilea strat care instaleaza pachetele python(RUN pip install flask flask-mysql) urmata de al patrulea strat care copiaza codu sursa (COPY ./opt/source-code) 
+	-si in cele din urma al cincilea strat care updateaza ENTRYPOINT-ul imaginii
+	-din moment ce fiecare strat stocheaza doar schimbarile din stratul precedent se vede in size de asemenea, daca ne uitam la iamginea de baza ubuntu, are in jur de 120MB 
+	-pachetele apt instalate au in jur de 300MB si dupa, straturile ramase sunt mici ca si size uri
+	-pt a intelege avantajele ale acestei arhitecturi stratificate, sa consideram o a doua aplicatie care are un alt Dockerfile, care este foarte similar cu primul, foloseste aceeasi imagine de baza Ubuntu, foloseste aceleaasi dependinte python si flask, dar foloseste un cod sursa diferit pt a creea o aplicatie diferita si deci un alt entrypoint de asenemea
+	-la layerul 4 in loc de COPY . /opt/source-code , avem COPY app2.py /opt/source-code si la ENTRYPOINT avem app2.py in loc de app.py 
+	-cand rulam comanda docker build sa builduim o noua imagine pt app2.py, din moment ce primele 3 straturi ale ambelor aplicatii sunt la fel, Docker nu o sa builduiasca primele 3 straturi 
+	-docker refoloseste primele 3 straturi pe care le a builduit pt prima aplciatie, din cache si doar creeaza ultimele doua layere cu noua sursa si noul entrypoint 
+	-astfel, docker builduieste imagini mai rapid si salveaza spatiu pe disk in mod eficient (primele 3 layere similare intre cele doua aplicatii vor ocupa la al doilea build 0mb)
+	-asta e aplicabil si daca updatam codul aplicatiei noastre 
+	-oricand updatam codu aplciatiei, adica app.py , in cazu de fata, Docker pur si simplu refoloseste toate layerele precedente din cache si da rebuild rapid la imaginea aplciatiei updatand cel mai recent cod sursa si astfel ne economiseste mult timp pt rebuild uri si update uri
+	-toate aceste straturi ale aplicatiei sunt create cand rulam comanda docker build pt a forma imaginea docker finala, deci toate acestea sunt straturile imaginii docker 
+	-odata ce buildu este complet, nu putem modifica continuturile acestor straturi, deci ele sunt readonly si le puteam modifica doar initiind un nou build 
+	-cand rulam un container bazat pe iamginea asta, folosind comanda docker run, docker creeaza un container bazat pe aceste layere si creeaza un nou layer modificabil deasupra layerului imaginii 
+	-acest layer modificabil e folosit sa stocheze date create de container ca si log file uri scrise de aplicatii, fileuri temporare generate de container sau orice file modificat de user pe acel container
+	-acest layer traieste doar atat cat containerul e in viata. Cand containerul este distrus, acest layer si toate schimbarile stocate in el sunt de asemenea distruse.
+	-tinem minte ca acelasi image layer este share-uit de toate containerele create care folosesc aceasta imagine
+	-daca m as loga in containerul nou creeat si as creea un file numit temp.txt, o sa creeze fileul in layeru containerului care este read si write, tocmai am zis ca file urile din image layer sunt read only, deci nu putem edita nimic in aceste file uri
+	-de ex, codu aplicatiei noastre(care se afla in app.py), care este pregatit in imagine, va fi parte din image layer si deci, este read only 
+	-sa zicem ca dupa ce rulez containerul, vreau sa modific codu sursa sa testez o modificare, tinem minte ca acelasi image layer poate fi share-uit printre mai multe containere creeate din aceasta imagine
+	-putem modifica app.py, dar inainte sa salvez fileu modificat, docker automat creeaza o copie a file ului in layeru read write si atunci voi modifica o versiune diferita a flieului in read write layer 
+	-toate modificarile viitoare vor fi facute pe aceasta copie a fileului in layeru read write, acesta se numeste COPY-ON-WRITE mechanism
+	-image layeru fiind read only, inseamna doar ca file urile din aceste layere nu vor fi modificate in imagine prorpiu zis, deci imaginea va ramane aceeasi tot timpul, pana cand rebuilduim imaginea folosind comanda docker build 
+	-cand stergem cotnainerul, toate datele care au fost stocate in layeru containerului vor fi sterse de asemenea. Schimbarile pe care le am facut la app.py si noul file temp.txt vor fi sterse si ele 
+	-daca vrem sa persistam datele acestea?
+	-de ex, daca lucram cu o baza de date si vrem sa pastram datele create de container putem adauga un volum persistent containerului 
+	-pt a face asta, creeam mai intai un volum folosind comanda docker volume create asa:
+
+	# docker volume create data_volume 
+
+	-cand rulam comanda asta, creeaza un folder numit data_volume in folderu volumes din /var/lib/docker/volumes 
+	-apoi, cand dam run la un docker container folosind comanda run, as putea sa dau mount la acest volum inauntrul layerului read write al containerului docker folosind optiunea -v asa:
+
+	# docker run -v data_volume:/var/lib/mysql mysql 
+
+	-dupa optiunea -v specificam numele noului nostru volum creeat(data_volume) urmat de doua puncte : si de locatia dinauntrul containerului meu, care e locatia default unde mysql stocheaza date(/var/lib/mysql) si apoi numele imaginii(mysql) 
+	-asta va creea un nou container(comanda run) si va da mount la data_volume in folderul /var/lib/mysql dinauntrul containerului
+	-deci toate datele scrise de baza de date sunt defapt stocate in volumul creat pe docker host(data_volume)
+	-chiar daca containerul e distrus, datele vor fi inca active
+	-daca de ex, rulam comanda docker run si dam mount la un volum pe care nu l am creeat inca(data_volme2), docker ca creea automat volumu data_volume2 si ii va da mount la container 
+
+	# docker run -v data_volume2:/var/lib/mysql mysql 
+
+	-ar trebui sa vedem toate volumele daca listam continuturile folderului /var/lib/docker/volumes
+	-asta se numeste volume mounting daca dam mount la un volum creat de docker in /var/lib/docker/volumes
+	-daca am avea datele deja in alta locatie, de ex avem un storage extern pe docker host la /data si am vrea sa stocam datele bazei de date in acel volum si nu il locatia default /var/lib/docker/volumes 
+	-in acest caz, trebuie sa dam run la un container folosind comanda docker run -v, dar in acest caz vom da path ul complet al folderului caruia vrem sa ii dam mount(/data/mysql in cazu nostru):
+
+	# docker run -v /data/mysql:/var/lib/mysql mysql 		//obs ca dam tot pathu folderului /data/mysql in loc de doar numele volumului data_volme ca si inainte 
+
+	-si deci, va creea un container si va da mount la folder containerului. Aceasta se numeste bind mounting
+	-deci sunt doua tipuri de mounturi: volume mounting si bind mount
+	-volume mount da mount la un volum din folderul /var/lib/docker/volumes 
+	-bind mount da mount la un folder din orice locatie(path) de pe docker host
+	-folosirea -v e pe vechi, noul mod este sa folosim optiunea --mount care e de preferat pt ca e mai verboasa astfel incat trb sa specificam fiecare parametru intr un format key = value 
+	-de ex, ultima comanda # docker run -v /data/mysql:/var/lib/mysql mysql ,   poate fi scrisa cu optiunea --mount folosind optiunile type, source si target
+	-tipul(type) in acest caz este bind, source este locatia de pe host a folderului si target este locatia de pe container
+
+	# docker run --mount type=bind,source=/data/mysql,target=/var/lib/mysql mysql 
+
+	-responsabil pt a face toate aceste operatiuni(mentinerea arhitecturii stratificate, creearea unui layer writable, mutarea file urilor printre layere sa dam enable la copy si write, etc..) sunt storage drivers
+	-deci docker foloseste storage drivers sa dea enable la arhitectura stratificata 
+	-unele dintre driverele comune de storage sunt: AUFS, BTRFS, ZFS, Device Mapper, Overlay si Overlay2
+	-selectia driverului de storage depinnde de OSu underlying care e folosit, de ex cu Ubuntu driverul default de storage este AUFS pt ca acest driver nu este disponibil pe alte sisteme de operare ca si fedora sau centOS
+	-in acele cazuri, Device Mapper ar putea fi o optiune mai buna
+	-Docker va alege cele mai bune drivere de storing disponibile automat bazat pe sistemul de operare 
+	-diferitele drivere de storage vor avea diferite caracteristici de performante si stabilitate
+	-deci am vrea sa alegem unul care satisface nevoile aplicatiei noastre si ale organizatiei
+	-mai multe aici https://docs.docker.com/engine/storage/
+
+Docker Storage - DEMO
+
+	-cand docker e instalat, automat creeaza o structura de foldere in pathu /var/lib/docker. Daca dam aici ls avem folderele create default: aufs, builder, containers, image, network, plugins, swarm, tmp, trust, volumes 
+	-asta e structura default de foldere maintained by docker, care pune automat fileuri si creeaza fileuri care sunt related cu imagini si containere in aceste foldere 
+	-deci, toate file urile related de containers sunt stocate in folderul containers, file urile related de imagini sunt puse in folderul images 
+	-am invatat ca storage drivers fac defapt aceste actiuni de creare de layere, mentaining de layere si fileurile legate de fiecare layer 
+	-pt a afla care e storage driveru folosit in acest caz particular rulam comanda:
+
+	# docker info | more 
+
+	-comanda asta afiseaza informatiile referitoare la dockerul instalat pe sistemul respectiv 
+	-o sa afiseze versiunea de docker folosita: Siver Version: 17.09.0-ce si chiar dedesubt afiseaza versiunea de driver folosita: Storage Driver: aufs ,care este driverul de storage default pt sistemele Debian si Ubuntu
+	-si chiar sub storage driver vedem directorul root unde stocheaza toate file urile: /var/lib/docker/aufs . Daca dam comanda ls in acest path, vom vedea alte 3 foldere creeate: diff, layers si mnt  
+	-fiecare storage driver stocheaza datele diferit, de ex aici putem vedea pt fiecare diver in parte, aufs fiind outdated, le avem pe restu, de ex overlay2 https://docs.docker.com/engine/storage/drivers/select-storage-driver/
+	-OverlayFS este stratificat pe 2 layere pe un singur host de linux si le prezinta ca un singur folder. Aceste foldere sunt numite layere si procesul de unificare este stiut ca un union mount.
+	-OverlayFS se refera la folderul lower ca si lowerdir si la folderul upper ca si upperdir. Viziunea unificata este expusa prin propriul ei folder numit merged.
+	-dupa ce downloadam o imagine pe 5 layere folosind # docker pull ubuntu , putem vedea 6 foldere sub /var/lib/docker/overlay2 ! Sa nu maniplam niciodata in mod direct folderele sau fisierele de sub var/lib/docker. Acestea sunt manipulate si managiuite direct de Docker.
+	-daca dam ls in folderul overlay2 o sa avem 5 foldere cu denumiri de genu hash 223c2864175491657d238e2664251d si inca un folder numit l 
+	-acest folder l (L mic) contine identificatori de layere prescurtati ca si legaturi simbolice. Acesti identificatori sunt folositi sa evite ajungerea la limitarea size ului paginii pe argumentele comenzii mount.
+	-cel mai de jos strat contine un file numit link, care contine numele identificatorului prescurtat. link: 6Y5IM2XC7TSNIJZZFLJCS6I4I4
+	-cel mai de jos strat contine de asemenea, si un folder numit diff care are continuturile layerului. diff: bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+	-al doilea cel mai de jos layer si fiecare layer mai de sus contin un file numit lower, care descrie parintele layerului respectiv si un folder numit diff care are continuturile acestuia.
+	-al doilea cel mai de jos layer contine, de asemenea, si folderul merged care contine continuturile unificare ale layerului parinte si el insusi si un folder work care este folosit inern de OverlayFS 
+	- # ls  /var/lib/docker/overlay2/223c2864175491657d238e2664251d... -> diff  link  lower  merged  work 	
+	- # cat /var/lib/docker/overlay2/223c2864175491657d238e2664251d.../lower -> l/6Y5IM2XC7TSNIJZZFLJCS6I4I4
+	- # ls /var/lib/docker/overlay2/223c2864175491657d238e2664251d.../diff/  -> etc  sbin  usr  var
+	-pt a vedea mount urile care exista cand folosim driverul de storage overlay, folosim comanda mount 
+
+	$ mount | grep overlay 
+
+	overlay on /var/lib/docker/overlay2/9186877cdf386d0a3b016149cf30c208f326dca307529e646afce5b3f83f5304/merged
+	type overlay (rw,relatime,
+	lowerdir=l/DJA75GUWHWG7EWICFYX54FIOVT:l/B3WWEFKBG3PLLV737KZFIASSW7:l/JEYMODZYFCZFYSDABYXD5MF6YO:l/UL2MW33MSE3Q5VYIKBRN4ZAGQP:l/NFYKDW6APBCCUCTOUSYDH4DXAT:l/6Y5IM2XC7TSNIJZZFLJCS6I4I4,
+	upperdir=9186877cdf386d0a3b016149cf30c208f326dca307529e646afce5b3f83f5304/diff,
+	workdir=9186877cdf386d0a3b016149cf30c208f326dca307529e646afce5b3f83f5304/work)
+
+	-rw de pe a doua linie arata ca mount-ul overlay este read-write 
+	-diagrama de mai jos arata cum o imagine Docker si un container Docker sunt stratificate
+	-layerul imaginii este lawerdir si layerul containerului este upperdir
+	-daca imaginea are mai multe straturi, mai multe foldere lwoerdit sunt folosite
+	-viziunea unificata este expusa printr-un folder numit merged care este efectiv mount point-ul containerului 
+
+	Container mount    file 1    file  2    file 3    file 4     "merged"
+								   ^	                ^	
+	Container layer      ^       file 2       ^       file 4    "upperdir"
+						 |                    |
+	Image layer        file 1    file 2     file 3              "lowerdir"
+
+	-unde image layer si container layer contin aceleasi file uri, leyerul containerului are prioritate si ascunde existenta acelorasi fisiere in layerul imaginii 
+	-pt a creea un container, driverul overlay2 combina folderul care reprezinta layerul superior al imaginii plus un nou folder pt container 
+	-layerele imaginii sunt lowerdir-ruile in overlay si sunt read-only. Noul folder pt container este upperdir si este writable 
+
+	-daca am vrea sa vedem cum este creeata o imagine pe care am downloadat-o de pe docker hub dar nu i am vazut Dockerfile-ul, folosim comanda $ docker history <idu imaginii>
+	-care ne va arata o lista de pasi care au fost facuti sa creeze acea imagine 
+	-in cazul nostru, daca rulam comanda history dupa ce am dar comanda $ docker pull hello-world pt a descaca imaginea basic docker care este foarte simpla 
+	-primul pas pe care il vedem afisat ultimul este sa copieze un file (scriptul /hello) la un anumit path 
+	-si a doua instructiune pe care o vedem deasupa primei instructiuni este o comanda sa dea run la acel script
+	-deci, acum stim ca este doar un script care trebuie rulat
+	-defapt, il putem rula chiar noi direct pt ca stim unde il pune Docker 
+	-deci, cand docker a dat pull la imagine, a dat pull de asemenea la toate file urile si/sau la orice dependinte asociate acelei imagini si acum ca stim structura folderelor facute de Docker, stim unde este pus acest script /hello 
+	-deci, in loc sa rulam un container docker, putem sa dam run direct la acest script si sa vedem output-ul: $ /var/lib/docker/overlay2/223c2864175491657d238e2664251df13b63adb8d050924fd1bfcdb278b866f7/diff/sbin
+
+	-sa vedem un alt ex: avem folderul sample-application in care se afla folderul simple-webapp-docker care contine un app.py cu codu sursa si un Dockerfile cu instructiunile pt a crea imaginea 
+	-daca dam $ cat Dockerfile vedem ca e f simpla si sunt 5 pasi de facut:
+
+	FROM ubuntu:17.04	  //creem imaginea docker din ubuntu 
+
+	RUN apt_get update && apt-get install -y python python-pip 		//pt a instala pachetele python apt-get si pip 
+
+	RUN pip install flask 		// pt a instala dependintele python
+
+	COPY app.py /opt/ 		//pt a copia codu sursa in locatia /opt, deci copiem app.py din locatia lui curenta in imaginea Docker
+
+	ENTRYPOINT FLASK_APP=/opt/app.py flask run --host=0.0.0.0		//specificam entry pointu pt app.py pe care il rulam si binduim serverul la toate interfetele network disponibile, incluzand interfata network externa a containerului. Adica asata permite aplicatiei flask sa fie accesibila din afara containerului 
+
+	-acum rulam comanda $ docker build .  ,in folderul in care avem Dockerfileu, pt a ne buildui imaginea observam ca dureaza 5 min 
+	-daca dam docker iamges vom vedea ca imaginea exista dar nu are niciun nume pt ca nu am specificat niciun nume 
+	-rulam iar comanda docker build de data asta cu un tag:
+	
+	$ docker build . -t simple-webapp
+
+	-acum va dura doar o secunda in loc de 5min, deoarece primul pas care da pull imaginii practic nu se mai executa deoarece imaginea e ubuntu e deja descarcata asa ca sare peste 
+	-al doilea pas in care instaleaza dependintele python a fost deja executat inainte pe imaginea ubuntu a fost disponibil in cache deci a folosit acest layer din cache, de asta vedem printu Using cache 
+	-si al treilea pas a fost facut anterior de aceea l a folosit din nou din cache ca si pasii 4 si 5, de asta vedem ca sunt luati din cache si a durat doar o secunda al doilea build 
+	-daca dam $ docker images vom vedea imaginea noastra tagata cu noul nume 
+	-acum daca dam $ docker history si $ cat Dockerfile putem conecta instructiunile din Dockerfile cu pasii din docker history 
+	-de ex, prima instructiune From ubuntu:17:04 se poate vedea in ultimii 6 pasi executati si comenzile lor aferente 
+	-a doua instructiune cu RUN apt-get update && apt-get install ... se poate vedea deasupra la ultimul pas din prima instructiune (cel cu comanda /bin/bash), adica putem vedea efectiv comanda apt-get update && apt-get install ... 
+	-acest pas cu depdendintele de python e unul dintre cei mai greu cu 366MB si asa mai departe putem vedea si urmatorii pasi in instructiunile noastre 
+	-acum putem intra in folderul dirverului in layerul imaginii si cu comanda $ du -sh *  putem vedea size urile fisierelor si le putem asimila cu size urile pasilor executati 
+	
+	-daca de ex rulam prima data prima versiune a imaginii cu prima versiune a codului sursa si apoi venim cu alta versiune a codului sursa, de ex app2.py, dar daca primele instructiuni, adica imaginea ubuntu, pachetele si dependintele docker sunt aceleasi va refolosi layerele care sunt aceleasi si va creea layere noi pt file urile care s au schimbat 
+	-asta vom face acum, vom copia app.py in app2.py ($ cp app.py app2.py) si vom da vi app2.py in care vom schimba return ul functiei def main() in "Welcome2!"
+	-la fel vom face si cu Dockerfile, com da $ cp Dockerfile Dockerfile2 , si vom edita continutul Dockerfile2-ului cu vi: in loc de app.py vom scrie app2.py pe liniile cu COPY si ENTRYPOINT
+	-cand rulam comanda docker build by default aceasta ia file ul numit Dockerfile, dar acum ii vom specifica noi cu optinea -f Dockerfile2 ca sa il ia pe al doilea nou creeat de noi:
+
+	$ docker build . -f Dockerfile2 -t simplewebapp2		//scimbam si numele imaginii
+
+	-iarasi imaginea s-a builduit foarte rapid, nu a durat nicio secunda, deoarece primele 3 straturi au fost luate din memoria cache 
+	-si pt ultimele doua instructiuni, cum au fost modificate merge si face alte layere noi pt ca avem app2.py in loc de app.py si nu le va lua din cache 
+	-dar sa zicem, de ex, ca dupa acesti doi pasi modificati 4 si 5 aveam mai multi pasi pana la 10 care erau identici, dar docker nu ii va lua din cache si va merge sa ii execute din nou pt ca unul dintre pasi a fost schimbat pana la acestia 
+	-deci cahing merge doar de sus primul pas/instructiune pana la pasul care a fost modificat, pt ca de indata ce se schimba un layer, nu avem nicio garantie ca urmatorii pasi vor fi la fel ca cei din prima imagine, asa ca doar merge si recreeaza toate layerele urmatoare
+	-daca dam docker ps, vedem ca avem cele doua iamgini cu nume diferite dar cu size uri egale 
+	-daca ne uitam la istoricul celor doua iamgini pe rand, $ docker history simple-webapp si simbple-webapp2 , vedem ca au aceleasi aproape instructiuni
+	-avem o mica diferenta la pasul de COPY 229B vs 230B deci de ce ambele imagini au acelasi size in docker images?
+	-pt ca ala e spariul total pe care imaginea l aru putea ocupa pe disk daca e sa ii dam copy sau chiar push undeva, nu este spatiul total efectiv pe care il ocupa imaginea pe disk 
+	-daca vrem sa vedem acest spaiu efectiv ocupat de imagine pe disk avem comanda:
+
+	$ docker system df 
+
+	-asta ne va arata consumarea disk ului de imagini containere si volume locale 
+	-daca vrem sa vedem cat ocupa fiecare separat si ce obiecte din aceste categorii(iamgini containere si volume) ce size uri au fiecare folosim optiunea -v dupa comanda:
+
+	$ docker system df -v 
+
+	-o sa ne dea frumos toate categoriile si toate imaginile, containerele si volumele aferente si size urile efective ocupate de acestea pe disk
+	-daca ne uitam la categoria REPOSITORY(images) ambele noastre imagini au 431.7MB la coloana SIZE, daar este o coloana nuoua numita SHARED SIZE si aici putem vedea ca acel size(431.7mb) este defapt share-uit de doua imagini
+	-deci spatiul  431.7MB este impartit de cele doua webapp-uri  
+	-avem si coloana UNIQUE SIZE (230B si 231MB) si daca adunam size urile ambelor imagini vom vedea ca ne iese spatiul efectiv total ocupat pe disk de cele doua imagini 
+
+Docker Storage: Lab 
+	Task:
+		What location are the files related to the docker containers and images stored?
+
+		-sub folderul /var/lib/docker sunt toate fisierele related to containers si images pe care le face docker storage driver 
+
+	Task:
+		-What directory under /var/lib/docker are the files related to the container alpine-3 image stored?
+
+		-dam $ docker ps -a si vedem ca, containerul cu numele alpine-3 are idu 3d0405bb5b62 
+		-dam cd .. pana suntem deasupra dolferului root(si home bin dev tmp run ....) si dupa mergem in folderul /var/lib/docker si vedem ca avem mai multe foldere printre care si folderul overlay2 si containers 
+		-daca dam cd in containers si dam ls vom vedea ca avem un folder cu acelasi id ca si cel al containerului alpine-3, si anume 3d0405bb5b62....
+		-deci asta este folerul de sub /var/lib/docker care are fisierele related cu containerul nostru  
+
+	Task:
+
+		-Run a mysql container named mysql-db using the mysql image. Set database password to db_pass123
+		Note: Remember to run it in the detached mode.
+
+		-dam run la un container docker pe baza imaginii mysql si punem environment variable MYSQL_ROOT_PASSWORD sa fie db_pass123, adica setam parola bazei de date sa fie db_pass123 cu ajutorul env var, rulam in modu detasat -d pe care il denumim cu optiunea --name sa fie mysql-db 
+
+		$ docker run -d --name=mysql-db -e MYSQL_ROOT_PASSWORD=db_pass123 mysql 
+
+	Task:
+
+		-We have just written some data into the database. To view the information we wrote, run the get-data.sh script available in the /root directory. How many customers data have been written to the database?
+		Command: $ sh get-data.sh
+
+		-dam cd in folderul root, mai intai dam cd .. pana nu mai scrie nimic in prompt si daca dam ls suntem deasupra folderelor root home bin dev tmp...
+		-dupa dam cd root si scriem ls, vedem ca avem scriptul get-data.sh si rulam comanda $ sh get-data.sh
+		-vedem ca avem 30 de clienti adica inregistrari in baza de date 
+		-dupa asta sa zicem ca va da crush baza de date si deci nu vom mai avea acces la inregistrarile bd pt ca nu am mapat un volum de pe host la folderul din container /var/lib/mysql unde erau inregistrarile 
+
+	Task:
+
+		Run a mysql container again, but this time map a volume to the container so that the data stored by the container is stored at /opt/data on the host.
+		Use the same name : mysql-db and same password: db_pass123 as before. Mysql stores data at /var/lib/mysql inside the container.
+
+		-rulam comanda diniante cu optiunea -v adaugata si vom mapa folderul /opt/data de pe host la folderul /var/lib/mysql de pe container, unde driverul de storage overlay2 va pune inregistrarile bazei de date 
+
+		$ docker run -v /opt/data:/var/lib/mysql -d -e MY_ROOT_PASSWORD=db_pass123 mysql 
+
+		-rulam din nou comanda sh get-data.sh in folderul root sa ne asiguram ca avem iar datele aici 
+		-iar isi ia crush baza de date, dar de data asta avem inregistrarile stocate in /opt/data de pe host si vom da redelpoy la containeru mysql folosind aceleasi optiuni ca si inainte 
+
+Docker Networking  https://docs.docker.com/engine/network/
+
+	Bridge 
+
+	-cand instalam Docker, el creeaza 3 network uri automat: bridge, none si host 
+	-bridge este retaua default la care este atasat un container cand este pornit  
+	-de ex, putem sa ne creeam propriul nostru bridge network intern si sa rulam un container in acesta astfel:
+
+	$ docker network create -d bridge my-network
+	$ docker run --network=my-net -itd --name=container3 busybox  
+
+	-daca vrem sa atasam containerul la oricare alt network decate bridge, trebuie sa specificam asta in optiunea --network asa:
+	$ docker run --ntework=none ubuntu   sau    $ docker run --network=host ubuntu 
+
+	-network ul bridge este un private internal network(retea interna privata) creeat de docker pe host 
+	-toate containerele sunt atasate la acest network by default si primesc o adresa de ip interna de obicei in range ul 172.17 (172.17.0.2, 172.17.0.3, 172.17.0.4....)
+	-containerele se pot accesa unele pe altele folosind acest ip intern, daca este nevoie, sau le facem legaturi intre ele cu --link, care trebuie facute in ambele sensuri
+	-ca sa nu mai avem aceasta problema, facem un user defined bridge network ca si in comanda de mai sus ($ docker network create -d bridge my-network)
+	-containerele dintr un network bridge definit de noi pot comunica intre ele doar cu numele acestora, fara sa facem vreun link intre ele 
+	-pt a accesa oricare dintre aceste containere din lumea exterioara, trebuie sa mapam porturile acestor containere la porturi de pe docker host, cum am mai facut
+	-containerele pot fi atasata sau deatasate din network urile creeate de noi din mers 
+	-pt a strege un container din bridge network-ul default, trebuie sa oprim containerul si sa il recreeam specificand o optiune de atasare la un network definit de noi(--network=my-net)
+	-cand nu specificam niciun host adress in optiunile de port publishing gen -p 80 sau -p 8080:80, defaultul este sa fie facut portul containerului 80 disponibil pe toate adresele host IPv4 si IPv6
+	-optiunea network ului ci driver bridge com.docker.network.bridge.host_binding_ipv4 poate fi folosita sa modificam adresa default pt porturi publicate. Putem specifica si o adresa IPv6 in ciud anumelui optiunii.
+	-cand default binding adress este o adresa asignata la o interfata specifica, portul containerului va fi accesibil doar prin acea adresa 
+	-daca setam adresa binding default ca :: inseamna ca porturile published for fi disponibile doar pe adresele hostului de tip IPv6. Oricum, daca o setam la 0.0.0.0 inseamna ca vor fi disponibile pe adresele host ului si de tip IPv4 si de tip IPv6
+	-ca sa restrictional un port publicat(expus sau mapat), adresa trebuie sa fie inclusa in optiunile de publicare ale containerului astfel: -p 0.0.0.0:8000:80 
+
+	-folosim comanda urm pt a creea un bridge netowrk definit de noi:
+
+	$ docker netowrk create my-net 		// putem si asa fara sa specificam -d bridge ca mai sus pt ca bridge este driverul default folosit pt a creea un network 
+
+	-pt a conecta un container la un network folosim optiunea -network cand il pornim 
+
+	$ docker run --name=my-container -itd --netowrk=my-net busybox 
+
+	-pt a conecta un container deja pornit la un network definit de noi, folosim comanda network connect <numele networkului> <numele containerului>:
+
+	$ docker netowrk connect my-net my-contianer
+
+	-folosim docker network rm pt a sterge un network bridge definit de noi. Daca sunt containere conectate la network, la deconectam mai intai cu disconnect sau le oprim direct !!!
+
+	$ docker network disconnect my-network my-container
+
+	$ docker netowrk rm my-net 
+
+	-cand creem un container nou, putem specifica una sau mai multe optiuni --network. Acest exemplu conecteaza un container ngnix la netowrku my-net. 
+	-de asemenea, expune portu 80 de pe container la 8080 de pe host ca sa poate fi accesat din exterior. Toate containerele conectate la my-net au acees la toate porturile containerului my-ngnix si vice versa.
+
+	$ docker create --name my-nginx --network my-net --publish 8080:80 nginx:latest
+    
+	-aici avem informatii detaliate cu toate opriunile si exemple cu comenzi etc.. https://docs.docker.com/reference/cli/docker/network/create/#specify-advanced-options
+
+	Host 
+
+	-alta cale de a accesa containerele extern este de a ascoia/atasa contaierul la host driver network
+	-asta inlatura orice izolare de network dintre hostul docker si containerul docker(containerul share uieste networking namespaceu hostului) 
+	-si containerul nu primeste propriul lui ip alocat. De ex, daca dam run la un container care se binduieste pe portu 80 si folosim host networking, appul containerului este disponibil pe portul 80 pe ipu hostului. Deci nu mai trb sa mapam portu hostului la cel al containerului ca e deja facuta treaba asta cumva. 
+	-de ex, daca aveam de rulat un webserver pe portul 5000 intr-un container webapp este automat accesibil pe acelasi port extern fara sa avem nevoie de niciun port mapping, deoarece containerul web foloseste host network-ul 
+	-asta inseamna ca nu vom putea sa rulam mai multe containere web pe acelasi host cu acelasi port, deoarece port urile sunt acuma comune pt toate containerele in networku host(5000 au toate containerele)
+	-deci cum containerul nu are propria adresa ip, cand folosim host mode netowrking, maparea porturilor nu are efect si optiunile -p, --publish, -P si --publish-all sunt ignorate, producand un WARNING:
+	WARNING: Published ports are discarded when using host network mode
+	-host networking poate fi folositor pt urmatoarele use case-uri:
+		-pt a optimiza performanta 
+		-in situatii in care un container are nevoie sa handleuiasca un numar mare de porturi 
+	-putem folosi un host network si pt un serviciu Swarm, passand optiunea --network host comenzii docker service create 
+	-in acest caz, contrulul traficului(traficu legat de menegiuirea swarmului si serviciului) este inca trimis peste un network overlay, dar containerele individuale de servicii swarm trimit date folosind Docker daemon's host network and ports
+	-asta creeaza niste extra limitari. De ex, daca un container se leaga la portu 80, doar un container poate rula pe un anumit nod de swarm.
+	-de ex, comanda urm porneste netcat intr-un container care asculta pe portu 8000:
+
+	$ docker run --rm -it --net=host nicolaka/netshoot nc -lkv 0.0.0.0 8000
+
+	-protul 8000 va fi apoi disponibil pe host si ne putem conecta la el folosind urm comanda din alt terminal:
+
+	$ nc localhost 8000
+
+	-ce scriem aici va aparea pe terminalul unde ruleaza containerul 
+	-pt a accesa un serviciu care ruleaza pe host dintr-un container, putem porni un container cu host networking por
+	
+	-documentatia host network driver: https://docs.docker.com/engine/network/drivers/host/#docker-desktop
+
+	None
+	-in network ul none, containerele nu sunt atasate la niciun network si nu au niciun acces la un netowrk extern sau alte containere. Containerele ruleaza intr un network izolat
+	-tocmai am bazut network-ul default, bridge, cu id-ul network-ului 172.17.0.1, deci toate containerele asociate acestui network default vor putea sa comunice unul cu celalalt 
+	-dar daca ne dorim sa izolam containerele de pe docker host. De ex, primele doua containere pe networku intern 172 si urmatoarele doua containere pe un internal network diferit ca si 182
+	-adica primele doua containere sa apartina de networku intern cu ipu 172.17.0.1 si sa aiba ip urile 172.17.0.2 si 172.17.0.4 si urmaotarele doua containere sa apartina de un internal network diferit cu ipu 182.18.0.1 si containerele sa aiba ip-urile 182.18.0.2 si 182.18.0.3 
+	-by default, docker creeaza doar un network bridge intern
+	-noi ne am putea creea propriul network intern cu comanda docker network create si sa specificam driverul, care este bridge, in cazu acesta si subnetu pt acel network, urmat de un nume custom al network ului izolat, de ex:
+
+	$ docker netowork create \
+	      --driver bridge \
+		  --subnet 182.18.0.0/16 \
+		  custom-isolated-network 
+
+	-pt a vedea toate network urile rulam comanda:
+
+	$ docker network ls 
+
+	-ca sa vedem setarile network-ului si adresa ip asignata unui container existent rilam comanda docker inspect, urmata de numele sau idu containerului:
+
+	$ docker inspect blissful_hopper 
+
+	-si vom gasi o sectiune numita "Networks" si sub aceasta vom vedea tipul de network la care containerul este atasat, de ex, "bridge" si IP-ul lui intern("IPAddress": "172.17.0.6") sau adresa mac("MacAdress": "02:42:ac:11:00:06")
+	-toate containerele dintr-un docker host pot ajunge unul la celalalt folosind numele acestora, de ex mysql.connect(    mysql      ) cu optinea --link nume1:nume2
+	-docker are un build-in DNS server care ajuta containerele to resolve each other folosind numele acestora (web: 172.17.0.2 si mysql: 172.17.0.3)
+	-serverul build-in de DNS mereu ruleaza pe adresa 127.0.0.11 
+	-Docker foloseste namespace-uri de timp netowrk care creeaza un namespace separat pt fiecare container si apoi foloseste virtual ethernet pairs pt a conecta containerele impreuna 
+
+	-alt exemplu:
+
+	$ docker network create my-network
+	$ docker run --name mariadb --network my-network -e MYSQL_ROOT_PASSWORD=password -d mariadb
+	$ docker run --name server-a --network my-network -p 8080:80 -d phpmyadmin/phpmyadmin
+	$ docker run --name server-b --network my-network -p 8081:80 -d phpmyadmin/phpmyadmin
+	$ docker run --name client-c --network my-network -d httpd
+	$ docker run --name client-d --network my-network -d httpd
+
+
+	Lab Networking:
+
+	Task: Explore the current setup and identify the number of networks that exist on this system.
+
+	$ docker network ls			//pt a lista toate network urile care exista pe sistem 
+
+
+	Task: What is the ID associated with the bridge network?
+
+	-ne uitam la network idu care are la driver bridge
+
+	Task: We just ran a container named alpine-1. Identify the network it is attached to.
+
+	$ docker ps -a 		//pt a vedea idu containerului 
+
+	$ docker inspect a2de8f 		// pt a vedea network ul la care este atasat 
+
+	"NetworkSettings":
+		"Networks": 
+			"host": 
+	
+	-aici vedem ca, daca dam scroll unpic, sub tagu "NetworkSettings", avem tagu "Networks" si sub acesta scrie "host" si de aici deducem ca driverul sau tipul networkului la care e atasat containerul alpine-3 este host 
+
+	Task: What is the subnet configured on bridge network?
+
+	$ docker inspect bridge 	
+
+	-rulam comanda asta pt a lista toate detaliile si configurarile network ului bridge 
+	-si sub "IPAM" avem "Config" si sub acesta avem "Subnet": "172.12.0.0/24" si "Gateway": "172.12.0.1"
+	
+	Task: Run a container named alpine-2 using the alpine image and attach it to the none network.
+
+	$ docker run --name=alpine-2 --network=none alpine 
+
+	-pt a rula containerul alpine-2 pe baza imaginii alpine si a-l asocia network ului cu driveru none
+
+	Task: Create a new network named wp-mysql-network using the bridge driver. Allocate subnet 182.18.0.0/24. Configure Gateway 182.18.0.1
+
+	$ docker network create --driver bridge --subnet 182.18.0.0/16 --gateway 182.18.0.1 wp-mysql-network 
+
+	-pt a creea un network cu driver bridge si configuram subnet ul (ip urile pe care se pot mapa containere la network 182.18.0.0/16 - 16 le de la final permite ultimelor 2 sectiuni din ip sa aiba valori unice pt containerele care vor urma sa fie atasate network ului de ex 182.18.0.1, 182.18.1.1 ...) si gateway ul(care ne duce catre internetul exterior si permite traficu de net dinspre networku nostru spre internet)
+
+	Task: 
+	Deploy a mysql database using the mysql:5.6 image and name it mysql-db. Attach it to the newly created network wp-mysql-network
+	Set the database password to use db_pass123. The environment variable to set is MYSQL_ROOT_PASSWORD.
+
+	$ docker run --name=mysql-db --network=wp-mysql-network -e MYSQL_ROOT_PASSWORD=db_pass123 mysql:5.6
+
+	-pt a rula un container cu numele mysql-db si a l asocia netowrkului creeat anterior si a seta parola pt userul root la baza de date cu optiunea -e (environment variable) cu imaginea de baza mysql:5.6
+
+	Task: 
+
+	Deploy a web application named webapp using the kodekloud/simple-webapp-mysql image. Expose the port to 38080 on the host.	//stim ca un app webapp asculta pe portul 8080 pe container 
+	The application makes use of two environment variable:
+	1: DB_Host with the value mysql-db.			
+	2: DB_Password with the value db_pass123.
+	Make sure to attach it to the newly created network called wp-mysql-network.
+	Also make sure to link the MySQL and the webapp container.
+
+
+	$ docker run --name=webapp --network=wp-mysql-network -e DB_Host=mysql-db -e DB_Password=db_pass123 -p 38080:8080 --link mysql-db:webapp -d kodekloud/simple-webapp-mysql 
+
+	-rulam un container cu numele webapp pe care il asociem netowrkului wp-mysql-network cu env vars DB_Host sa fie mysql-db si DB_Password sa fie db_pass123 
+	-expunem si protul 8080 la care ascumta by default un webapp la portu de pe host 38080 
+	-si facem si legatura dintre noul container creeat si rulat acu webapp si mysql-db cu optiunea --link, care este deprieciat si nu mai trebe 
+	-containerele din acelasi network pot comunica intre ele fara sa le mai link-uim, de ex:
+
+	$ docker network create my_bridge_network
+	$ docker run -d --name=container1 --network my_bridge_network image1
+	$ docker run -d --name=container2 --network my_bridge_network image2
+
+	-container1 poate comunica cu container2 folosind http://continer2 (si viceversa)
+
+	-mai rulam un container3 pe alt custom bridge network si deci acesta nu va putea comunica cu primele 2, deoarece este in alt network
+	-ca sa il aducem si pe acestsa in network ul celorlaltor doua containere, folosim docker network connect <nume_network> <nume_container>
+
+	$ docker network connect my_network app2 
+
+
+Container Orchestration 
+
+	-de ex, pt a rula o instanta de nodejs rulam comanda docker run nodejs
+	-cand numarul de useri creste, aceasta instanta nu va mai putea handleui loadul si va trebui sa dam deploy la instante aditionale, ruland comanda de mai multe ori 
+	-asta trebuie sa facem noi, trebuie sa fim cu ochii pe loadu si performanta aplicatiei si sa dam deploy la instante aditionale si trebuie sa fim atenti si la healthu acestor aplicatii 
+	-daca un container da fail, ar trebui sa putem sa detectam asta si sa dam deploy la alta instanta a aplicatiei 
+	-daca docker hostu da crash si e inaccesibil, containerele hostuite pe acel host devin si ele inaccesibile 
+	-cand avem aplicatii imense cu sute sau mii de containere, nu este o solutie practica sa avem doar un om avand grija de toate acestea 
+	-orchestrarea containerelor este o solutie pt asta, care consta intr un set de tool uri si script uri care pot ajuta la hostuirea containerelor intr-un environment de productie 
+	-de obicei, o solutie de orchestrare a containerelor consta in mai multe docker host uri care pot hostui mai multe containere 
+	-astfel, daca un host da fail, aplicatia este inca accesibila prin celelalte host uri 
+	-o solutie de orchestrare a containerelor ne permite sa dam deploy la sute sau mii de instante ale aplicatiei cu o singura comanda:
+
+	$ docker service create --replicas=100 nodejs
+
+	-aceasta e o comanda folosita pt docker swarm, o solutie de orchestrare 
+	-unele solutii de orchestrare ne pot ajuta sa crestem(scale up) numarul de instante cand userii cresc si sa scadem(scale down) numarul de instante cand cererea scade 
+	-unele solutii ne pot ajuta chiar sa adaugam automat host uri aditionale sa suportam load-ul userilor 
+	-solutiile de orchestrare nu ofera doar clustering si scaling, ci ofera suport si pt advanced networking intre aceste containere care apartin unor host uri diferite 
+	-si de asemenea, si load balancing la request-urile userilor pe diferite host uri. Ofera de asemenea suport pt a sharui storage intre host uri si suport pt configurarea managementului si a securitatii pt cluster 
+	-sunt mai multe solutii de orchestrare a containerelor disponibile
+	-Docker are Docker Swarm, Kubernetes e de la Google si MESOS de la apache 
+	-Docker Swarm e foarte usor de set up si inceput treaba, nu are cateva dintre feauturile auto scaling de care avem nevoie pt aplicatii complexe de productie 
+	-pe de lata parte, MESOS este destul de greu de set up si de inceput treaba, dar suporta multe features avansate 
+	-Kubernetes, cea mai populara dintre toate, este unpic greu de setup si de inceput cu el, dar ofera multe optiuni pt a customiza depolyment-uri si are suport pt multi vendori 
+	-Kubernetes este suportat la toti providerii publici de cloud ca si GCP, Azure si AWS si proiectul kubernetes este unul dintre proiectele top rated de pe Github 
+
+Docker Swarm 
+
+	-cu Docker Swarm putem combina mai multe machine-uri Docker impreuna intr-un singur cluster Docker 
+	-Swarm va avea grija de distribuirea serviciilor noastre sau a instantelor aplicatiei pe host-uri separate pt disponibilitate crescuta si pt load balancing pe diferite sisteme si hardware
+	-pt a instala Docker Swarm, trebuie sa avem mai intai host-uri cu Docker instalat pe ele 
+	-apoi trebuie sa desemnam un host sa fie masteru sau manageru(sau manageru Swarm cum ii zice) si restul ca si slaves sau workers
+	-dupa ce facem asta, rulam comanda $ docker swarm init pe managerul swarm care il va initializa pe acesta 
+
+	$ docker swarm init --advertise-addr 192.168.1.12
+
+	-in output va fi comanda pe care va trebui sa o rulam pe wokers pt a da join la manager 
+
+	$ docker swarm join --token SWMTKN-1-34va...
+
+	-acum suntem gata sa creeam servicii si sa le dam deploy pe clusterul swarm 
+	-ca sa rulam o instanta a my-web-server-ului, rulam comanda docker run si specificam numele imaginii pe care ne-o dorim sa o rulam 
+	-asta creeaza o noua instanta container a aplicatiei mele si imi deserveste serverul web 
+	-acum ca am invatat cum sa creeam clusterul swarm, cum folosim ne folosim clusteru ca sa rulam mai multe instante ale serverului meu web?
+	-Docker Swarm Orchestrator da automat deploy la sute de instante si are si lod balancing pe ele si health checks ca sa dea restart la vreauna daca da fail si crapa
+	-componenta cheie a swarm orchestration este docker service 
+	-Docker Services sunt una sau mai multe instante ale unei singure aplciatii sau servicu care ruleaza pe nodurile din clusteru swarm 
+	-de ex, in acest caz, as putea sa creez un serviciu docker care sa ruleze mai multe instante ale aplicatiei mele web server pe nodurile worker in clusterul meu swarm
+	-pt asta, rulam comanda docker service create pe nodul manager si specific numele imaginii mele(my-web-server) si folosim optiunea --replicas=3 pt a specifica numarul de instante ale web serverului meu pe care as vrea sa le pronesc pe cluster 
+
+	$ docker service create --replicas=3 my-web-server 
+
+	 -am specificat 3 replici si deci am 3 instante ale serverului meu web distribuite pe diferite noduri worker
+	 -comanda docker service trebuie rulaata pe nodul manager si nu pe nodul worker 
+	 -comanda docker service create este similara cu comanda docker run in termeni de optiuni pasate ca si -e environment variable, -p pt a expune porturi , --network pt a atasa containere la un network etc 
+
+	$ docker service create --replicas=3 --network frontend my-web-server
+	$ docker service create --replicas=3 -p 8080:80 my-web-server
+
+	-asta e o introducere din avion a docker swarm, sunt mult mai multe de stiut ca si configurarea multiplelor noduri manager , overlay networks etc..
+
+Docker Kubernetes
+
+	-cu Docker putem sa rulam o singura instanta a unei aplicatii folosind docker CLI, ruland comanda docker run 
+	-cu Kubernetes, folosind CLIu lui, stiu ca si kube control, putem rula o mie de instante ale aceleiasi aplicatii cu o singura comanda:
+
+	$ kubectl run --replicas=1000 my-web-server 
+
+	-Kubernetes poate sa ii dea scale up la 2000, cu alta comanda:
+
+	$ kubectl scale --replicas=2000 my-web-server 
+
+	-kubernetes poate fi si configurat sa faca asta automat astfel incat instantele si infrastructura pot sa scale-up si scale-down bazat pe loadu de useri 
+	-kubernetes poate upgrada aceste 2000 de instante ale aplicatiei, intr-o maniera rolling upgrade, cate una deodata cu o singura comanda:
+
+	$ kubectl rolling-update my-web-server --image=web-server:2 
+
+	-daca ceva merge gresit, ne poate ajuta sa dam roll back la aceste imagini cu o singura comanda:
+
+	$ kubectl rolling-update my-web-server --rollback
+
+	-kubernetes ne poate ajuta sa testam noi feature-uri ale aplciatiei noastre upgradand doar un procent al acestor instante prin metode de testare A si B 
+	-arhitectura deschisa a kubernetes ofera suport pt foarte multe netowrk and storage renders
+	-fiecare brand de network sau storage la care ne putem gandi are un plugin pt kubernetes 
+	-kubernetes suporta o varietate de mecanisme de autentificare si autorizare
+	-toti providerii majori de servicii cloud au suport nativ pt kubernetes: Amazon EKS 
+	-Kubernetes foloseste Docker Host pt a hostui aplicatii in forma de containere Docker 
+	-Kubernetes suporta alternative Docker ca si rocket sau acryo 
+	-un cluster Kubernetes consta intr-un set de noduri 
+	-un nod este un machine, fizica sau virtuala pe care e instalat softu kubernetes cu tool urile aferente cred 
+	-un node este un worker machine si aici sunt pornite containerele de catre kubernetes 
+	-daca nodul pe care ruleaza aplicatia da fail, aplicatia pica, deci trb sa avem mai mult de un singur nod 
+	-un cluster este un set de noduri grupate impreuna, astfel, chiar daca un nod da fail, avem aplicatia inca accesibila din celelalte noduri 
+	-responsabil de menegiurirea clusterului(unde este informatia despre membrii clusterului stocata, cum sunt nodurile monitorizate, cand da fail un nod cum mutam workloadu acestui nod failuit la alt worker node) este masterul 
+	-masterul este un nod cu componentele control plane ale kubernetes instalate 
+	-masterul supravegheaza nodurile din cluster si e responsabil pt orghestrarea propriuzisa a containerelor pe nodurile worker 
+	-cand instalam kubernetes pe un sistem, instalam defapt urmatoarele componente: un server API, un ETCD server, un serviciu kubelet, un Container Runtime Engine ca si Docker, cateva controlere si un scheduler
+	-serverul API acts ca un frontend pt Kubernetes: device-urile de management ale userului, interfete de linie de comanda, toate vorbesc cu serverul API pt a interactiona cu clusterul Kubernetes 
+	-ETCD is a distributed reliable key value store used by kubernetes pt a stoca toate datele folosite sa menegiuiasca clusterul. Cand avem mai multe noduri si mai multe master-uri in clusteru nostru, etcd stocheaza toate informatiile astea pe toate nodurile din cluster intr-o maniera distribuita.
+	-ETCD este responsabil pt implementatu de log-uri pe cluster pt a se asigura ca nu exista conflicte intre master-uri 
+	-Scheduleru este responsabil pt a distribui work sau containere pe mai multe noduri. Cauta containere nou creeate si le asigneaza noduri.
+	-Controllerele sunt creierul din spatele orchestrarii. Sunt responsabile de a observa si a raspunde cand nodurile, containerele se opresc(dau fail cred)
+	-Controllerele iau decizia de a porni noi containere in cazuri de genu
+	-Container Runtime este softul din spate care e folosit sa dea run la containere, in cazu nostru se intampla sa fie Docker 
+	-Kubelet, este agentul care merge pe fiecare nod din cluster, care e responsabil sa se asigure ca containerele ruleaza pe noduri cum ne asteptam(as expected) 
+	-una din utilitatile liniei de comanda este Kube Command Line Tool care e stiuta si ca Kube Control Tool sau Kube Cuddle
+	-Kube Control Tool este CLIu Kubernetes, care e folosit sa dea deploy si sa menegiuiasca aplicatii pe un cluster Kubernetes
+	-si, de asemenea, sa obtina informatii legate de cluster, sa obtina statusu nodurilor din cluster si multe alte lucruri
+
+	-comanda Kube Control run e folosita sa dea deploy la o aplicatie pe cluster.
+
+	$ kubectl run hello-minicube
+
+	-comanda kube control cluster-info e folosita sa vedem informatii despre cluster 
+
+	$ kubectl cluster-info 
+
+	-comanda kube control get nodes e folosita sa listeze toate nodurile care fac parte din cluster 
+
+	$ kubectl get nodes 
+
+	-deci, ca sa rulam sute de instante ale aplicatiei noastre(my-web-app) pe sute de noduri avem nevoie de o singura comanda kubernetes ca asta:
+
+	$ kubectl run my-web-app --image=my-web-app --replicas=100 
+	
+	
+Docker image publishing on Dockerhub using Dockerfile dor VotingApp
+
+-acum o sa incerc sa bag imaginile docker pt fiecare microserviciu al aplicatiei voting app pe Dockerhub ca sa le putem da pull cand avem nevoie pt deployment pe kubernetes de ex
+-mergem pe Ubuntu, ca acolo avem voie cu docker si mergem in folderu vote al VotingApp, aici o sa dam comanda urm si ne pune sa intram pe un browser la linku respectiv si sa bagam un cod ca sa fim connectati cu contu de docker cred 
+
+$ docker login
+
+-acuma ca sa builduim imaginea dam comanda urm care ca buildui imaginea si o ba taga cu david522/vote-app:vote  
+
+$ docker build -t david522/vote-app:vote . 
+
+-acuma daca dam $ docker images vedem ca avem imaginea noastra acolo, deci acuma putem da push imaginii pe repou dockerhub cu comanda:
+
+$ docker push david522/vote-app:vote
+	
+-verificam pe dockerhub ca a mers treaba si putem folosi imaginea in delpomentu nostru kubernetes acuma: 
+
+spec:
+  containers:
+  - image: david522/vote-app:vote
+  
+-deci Dockefile are configuratia o imagine de docker bazata pe un mini OS de linux in care avem bagat codu sursa al aplciatiei noastre cu toate depdenintele instalate si portul 80 expus pe container 
+-deci totu va fi pregatit pt pasii urmatori pt a da deploy la un container pe un cluster kubernetes de exemplu 
+-docker hub repo: https://hub.docker.com/repository/docker/david522/vote-app/tags 
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
