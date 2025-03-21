@@ -25,5 +25,5 @@ variable "instance_type" {
 variable "key_name" {
   description = "The name of the AWS EC2 key pair to use for SSH access"
   type        = string
-  default     = "david-aws-4-eu-north-1" # Optional default value
+  default     = "web-access-key-pair" # Optional default value
 }
