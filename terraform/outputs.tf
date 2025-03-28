@@ -1,16 +1,16 @@
 output "instance_public_ip" {
   description = "The public IP of the EC2 instance"
-  value       = aws_instance.web-app.public_ip
+  value       = [for instance in aws_instance.web-app : instance.public_ip]
 }
 
-output "instance_id" {
-  value       = aws_instance.web-app.id
+output "instance_ids" {
+  value = [for instance in aws_instance.web-app : instance.id]
 }
 
-output "vote_app_url" {
-  value = "http://${aws_instance.web-app.public_ip}:8080"
+output "vote_app_urls" {
+  value = [for instance in aws_instance.web-app : "http://${instance.public_ip}:8080"]
 }
 
-output "result_app_url" {
-  value = "http://${aws_instance.web-app.public_ip}:8081"
+output "result_app_urls" {
+  value = [for instance in aws_instance.web-app : "http://${instance.public_ip}:8081"]
 }
