@@ -61,6 +61,7 @@
         src: "/home/ec2-user/VotingApp/ssl/{{ item }}"
         dest: "/etc/nginx/ssl/"
         mode: '0600'
+        remote_src: yes
       loop:
         - vote.linkpc.net.cer
         - vote.linkpc.net.key
