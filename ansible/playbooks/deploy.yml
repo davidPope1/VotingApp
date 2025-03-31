@@ -4,12 +4,12 @@
   become: yes
   tasks:
     - name: Update packages
-      yum:
+      dnf:
         name: '*'
         state: latest
 
     - name: Install Docker, Git, Nginx
-      yum:
+      dnf:
         name:
           - docker
           - git
