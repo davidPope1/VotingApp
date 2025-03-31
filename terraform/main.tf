@@ -124,6 +124,8 @@ resource "aws_security_group" "web_sg" {
 
 # git restore . && git clean -df  && git pull origin main    ca sa dam discard la schimbarile locale si sa ne asiguram ca suntem up to date cu repo-ul 
 
+# mai e o manevra cand intram in conflicte de cacat: $ git fetch origin $ git reset --hard origin/main $ git pull origin main 
+
 # sa zicem ca dam docker-compose up in repo pe ubuntu direct fara deploy pe aws !!!
 
 # sudo apt update  si  sudo apt upgrade -y  si  sudo apt install -y docker.io git nginx
@@ -132,3 +134,7 @@ resource "aws_security_group" "web_sg" {
 # chmod +x healthchecks/redis.sh  si  chmod +x healthchecks/postgres.sh
 
 # in grafana la mergem la Connections -> Data sources si cautam in lista Prometheus si la URL punem http://prometheus:9090 si dupa dam setup dashboard si avem mai multe variante https://github.com/sohammohite/container-monitoring/blob/main/dashboard.json ori ID-ul 1860 sau 14282
+
+# ANSIBLE
+
+# sudo apt update     sudo apt install -y ansible 

@@ -1,0 +1,85 @@
+---
+- name: Set up web app on EC2 instances
+  hosts: web_app
+  become: yes
+  tasks:
+    - name: Update packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install Docker, Git, Nginx
+      yum:
+        name:
+          - docker
+          - git
+          - nginx
+        state: present
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Enable and start Nginx
+      systemd:
+        name: nginx
+        enabled: yes
+        state: started
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Install Docker Compose
+      shell: |
+        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+
+    - name: Clone the GitHub repository
+      git:
+        repo: 'https://github.com/davidPope1/VotingApp.git'
+        dest: '/home/ec2-user/VotingApp'
+        owner: ec2-user
+        group: ec2-user
+
+    - name: Set correct permissions for health check scripts
+      file:
+        path: "/home/ec2-user/VotingApp/healthchecks/{{ item }}"
+        owner: ec2-user
+        group: ec2-user
+        mode: '0755'
+      loop:
+        - redis.sh
+        - postgres.sh
+
+    - name: Move SSL certificates to Nginx folder
+      copy:
+        src: "{{ item }}"
+        dest: "/etc/nginx/ssl/"
+        mode: '0600'
+      loop:
+        - ssl/vote.linkpc.net.cer
+        - ssl/vote.linkpc.net.key
+        - ssl/ca.cer
+
+    - name: Copy Nginx configuration files
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      loop:
+        - { src: "nginx.conf", dest: "/etc/nginx/nginx.conf" }
+        - { src: "nginx/votingapp.conf", dest: "/etc/nginx/conf.d/votingapp.conf" }
+
+    - name: Start the application using Docker Compose
+      shell: |
+        cd /home/ec2-user/VotingApp
+        docker-compose up --build -d
+
+    - name: Restart Nginx to apply the new configuration
+      systemd:
+        name: nginx
+        state: restarted
