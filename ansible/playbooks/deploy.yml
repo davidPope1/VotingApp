@@ -43,8 +43,9 @@
       git:
         repo: 'https://github.com/davidPope1/VotingApp.git'
         dest: '/home/ec2-user/VotingApp'
-        owner: ec2-user
-        group: ec2-user
+        version: main
+        force: yes
+      become: yes
 
     - name: Set correct permissions for health check scripts
       file:
