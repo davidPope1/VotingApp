@@ -2,6 +2,9 @@
 
 set -e  # Exit immediately if a command exits with a non-zero status
 
+# Install jq if not already installed
+sudo yum install -y jq
+
 # Navigate to the Terraform directory
 cd ../terraform
 
