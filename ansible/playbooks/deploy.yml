@@ -45,7 +45,6 @@
         dest: '/home/ec2-user/VotingApp'
         version: main
         force: yes
-      become: yes
 
     - name: Set correct permissions for health check scripts
       file:
@@ -59,13 +58,13 @@
 
     - name: Move SSL certificates to Nginx folder
       copy:
-        src: "{{ item }}"
+        src: "/home/ec2-user/VotingApp/ssl/{{ item }}"
         dest: "/etc/nginx/ssl/"
         mode: '0600'
       loop:
-        - ssl/vote.linkpc.net.cer
-        - ssl/vote.linkpc.net.key
-        - ssl/ca.cer
+        - vote.linkpc.net.cer
+        - vote.linkpc.net.key
+        - ca.cer
 
     - name: Copy Nginx configuration files
       copy:
