@@ -29,7 +29,7 @@ echo "[web_app]" > ../ansible/inventory/hosts.ini
 
 # Loop through the public IPs and add them to the inventory file
 for ip in $public_ips; do
-  echo "$ip ansible_ssh_user=ec2-user ansible_ssh_private_key_file=web-access-key-pair.pem" >> ../ansible/inventory/hosts.ini
+  echo "$ip ansible_ssh_user=ec2-user ansible_ssh_private_key_file=web-access-key-pair.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> ../ansible/inventory/hosts.ini
 done
 
 echo "Ansible inventory file 'hosts.ini' has been created."
