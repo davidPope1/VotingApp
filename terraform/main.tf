@@ -138,3 +138,5 @@ resource "aws_security_group" "web_sg" {
 # ANSIBLE
 
 # sudo apt update     sudo apt install -y ansible 
+
+# chmod +x scripts/run_deploy.sh    // ca sa ne asiguram ca este executable(are permisiuni de executie)
