@@ -11,7 +11,7 @@ resource "aws_instance" "web-app" {
     Description = "A voting web app hosted by Docker on AWS"
   }
 
-  user_data = file("./deploy.sh")
+#  user_data = file("./deploy.sh")
 
   key_name        = var.key_name
   security_groups = [aws_security_group.web_sg.name]
