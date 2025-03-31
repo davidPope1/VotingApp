@@ -97,7 +97,7 @@ resource "aws_security_group" "web_sg" {
 
 # 	vote.linkpc.net     http://13.60.54.109:8080    
 
-# ssh -i web-access-key-pair.pem ec2-user@13.60.54.109        # 13.60.54.109
+# ssh -i web-access-key-pair.pem ec2-user@16.170.215.93        # 13.60.54.109
 
 # http://51.21.130.93:8080       https://vote.linkpc.net        https://vote.linkpc.net/result
 

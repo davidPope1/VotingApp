@@ -14,6 +14,10 @@ terraform init
 # Apply Terraform to provision the infrastructure
 terraform apply -auto-approve
 
+# Wait for instances to fully initialize
+echo "Waiting 60 seconds for instances to boot..."
+sleep 90
+
 # Fetch the public IPs from Terraform output
 public_ips=$(terraform output -json instance_public_ip | jq -r '.[]')
 
