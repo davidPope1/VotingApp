@@ -71,9 +71,10 @@
       copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
+        remote_src: yes
       loop:
-        - { src: "nginx.conf", dest: "/etc/nginx/nginx.conf" }
-        - { src: "nginx/votingapp.conf", dest: "/etc/nginx/conf.d/votingapp.conf" }
+        - { src: "/home/ec2-user/VotingApp/nginx.conf", dest: "/etc/nginx/nginx.conf" }
+        - { src: "/home/ec2-user/VotingApp/nginx/votingapp.conf", dest: "/etc/nginx/conf.d/votingapp.conf" }
 
     - name: Start the application using Docker Compose
       shell: |
