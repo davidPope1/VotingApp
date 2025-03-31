@@ -8,6 +8,9 @@ sudo apt update && sudo apt install -y jq
 # Navigate to the Terraform directory
 cd ../terraform
 
+# Asign correct permissions to the key pair file so ansible accepts it to SSH 
+chmod 400 web-access-key-pair.pem
+
 # Initialize Terraform (download necessary plugins)
 terraform init
 
