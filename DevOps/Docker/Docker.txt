@@ -1949,17 +1949,100 @@ spec:
 -deci totu va fi pregatit pt pasii urmatori pt a da deploy la un container pe un cluster kubernetes de exemplu 
 -docker hub repo: https://hub.docker.com/repository/docker/david522/vote-app/tags 
 
-	
-	
+Multi stage image building
+
+
+# === Stage 1: Build Angular app ===
+FROM node:18-alpine AS builder
+
+# Set working dir
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy the rest of the source
+COPY . .
+
+# Build the app for production
+RUN npm run build
+
+# === Stage 2: Serve app with NGINX ===
+FROM nginx:stable-alpine AS final
+
+# Remove default NGINX static content
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built Angular app from the builder stage
+COPY --from=builder /app/dist/your-angular-app-name /usr/share/nginx/html
+
+# Expose port 80
+EXPOSE 80
+
+# Start NGINX
+CMD ["nginx", "-g", "daemon off;"]
 
 
 
+builder	Has Node.js, compiles Angular source to /app/dist/your-angular-app-name
+final	Lightweight NGINX image serving static files from dist directory
+
+Your final image doesn’t have Node.js, npm, or your source code — only the compiled files (index.html, main.js, etc.).
+
+Much smaller, faster, and more secure production image
+
+Totally clean separation of concerns: dev/build in one stage, production in another
 
 
+Dinamic website: 
 
+# === Stage 1: Build environment ===
+FROM node:18 AS builder
 
+WORKDIR /app
 
+COPY package*.json ./
+RUN npm ci --only=production
 
+COPY . .
+
+# === Stage 2: Final runtime ===
+FROM node:18-slim AS runtime
+
+WORKDIR /app
+
+# Copy only necessary files
+COPY --from=builder /app /app
+
+EXPOSE 3000
+CMD ["node", "server.js"]
+
+docker compose: 
+
+services:
+  app:
+    build:
+      context: ./app		// folderu de langa compose file 
+      target: runtime		// numele stafe ului final mai lightweight 
+
+Here, we:
+
+Use full Node in builder to install dependencies
+
+Copy only the runtime code and production dependencies into slim image
+
+Keep it clean and smaller than installing everything in one go
+
+So to answer your question:
+
+❓ Can multi-stage builds work with dynamic sites?
+
+✅ Yes — even better in some cases! You just have to:
+
+Include the runtime (Python, Node, etc.) in the final image
+
+Only copy what's needed for serving the app
 
 
 

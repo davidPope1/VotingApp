@@ -3029,7 +3029,7 @@ Demo - Provision cluster using Kubeadm
 
     $ sudo systemctl restart containerd 
 
-    -trei sa facem asta pt toate containerele!!!
+    -trei sa facem asta pt toate vm-urile!!!
 
     -dupa ce facem asta la toate vm-urile revenim pe pagina initiala https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
     -aici am terminat sectiunea Installing a container runtime
