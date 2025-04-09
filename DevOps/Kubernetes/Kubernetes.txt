@@ -3208,9 +3208,49 @@ Demo - Provision cluster using Kubeadm
 
     $ kubeadm join 192.168.56.11:6443 --token 4bckf3.hi8llixuitw6445f --discovery-token-ca-cert-hash sha256:a18947957a6610a039837f269128cdd56d628f4278825369b11490f6a9fd7ee0  
 
+    -daca avem probleme de genu: [preflight] Running pre-flight checks
+        error execution phase preflight: [preflight] Some fatal errors occurred:
+        [ERROR FileAvailable--etc-kubernetes-pki-ca.crt]: /etc/kubernetes/pki/ca.crt already exists
+        [preflight] If you know what you are doing, you can make a check non-fatal with `--ignore-preflight-errors=...`
+        To see the stack trace of this error execute with --v=5 or higher
+
+    -dam urm comenzi:
+
+    $ sudo kubeadm reset
+    $ sudo rm -rf /etc/kubernetes/*
+    $ sudo rm -rf /var/lib/etcd/*
+    $ sudo rm -rf /var/lib/kubelet/*
+
+    -apoi dam iar comanda de join
+
     -venim pe nodu master controlplane si dam comanda urm sa vedem ca a dat join workeru cu success:
 
     $ kubectl get nodes   //vedem ca e okei
+
+    -tre sa copiem configuratia noastra kubernetes in controlplane sa o pornim de acolo pe worker nodes 
+    -pt asta tre sai facem ssh cu coamanda scp 
+    -pt asta ne trei pathu de la privatekey-ul lui controlplane care se afla aici: 
+
+    E:\DevOps\Kubernetes\certified-kubernetes-administrator-course-master\kubeadm-clusters\virtualbox\.vagrant\machines\controlplane\virtualbox\private_key
+
+    -facem un folder mkdir k8s in controlplane 
+    -comanda de copy este, pe care o executam in folderu k8s-specifications din VotingApp:
+
+    $ scp -i E:\DevOps\Kubernetes\certified-kubernetes-administrator-course-master\kubeadm-clusters\virtualbox\.vagrant\machines\controlplane\virtualbox\private_key worker-deployment.yaml vagrant@192.168.1.7:/home/vagrant/k8s/
+
+    -executam comanda pt toate file-urile din k8s-specifications
+
+    -acuma dam apply la aceste yaml uri:
+
+    $ kubectl apply -f db-deployment.yaml
+
+    -verificam pe ce nodes ruleaza pods-urile, dand comanda urm pe nodu controlplane(master): 
+
+    $ kubectl get pods -o wide -A
+
+    -asta ne confirma ca pods urile sunt inmpartite pe node urile noastre, deci scheduler isi face treaba
+    -avem mai multe componente ale kubernetes: API server, etcd value store, kubeadm cli pt a seta clusteru cu maoster si workers, kubelet care e un serviciu care merge in spate cumva 
+
 
     -acuma o sa si testam unpica pe controlplane 
 
@@ -3285,8 +3325,6 @@ $ kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-pa
 - Go to Create > Import in the Grafana UI. Enter the Dashboard ID (e.g., 3119, 315, 3131, 6417, 8171, 741 for Kubernetes monitoring) and click Load. Select the Prometheus data source and click Import.
 
 $ minikube dashboard 		# dashboard 
-
-
 
 
 

@@ -8,9 +8,8 @@ spec:
   type: NodePort
   ports:
   - name: "vote-service"
-    port: 8080
-    targetPort: 80
-    nodePort: 31000
+    targetPort: 80      # portu containerului
+    port: 8080          # portu serviciului
+    nodePort: 31000     # portu pe care accesam aplicatia din browser
   selector:
     app: vote
-  
