@@ -2582,7 +2582,7 @@ resource "aws_lb_listener" "web_listener" {
   }
 }
 	
-Terraform config for aplication load balancer(ALB) rout table security groups vpc for ec2 instances both public and private 
+Terraform config for aplication load balancer(ALB) route table security groups vpc for ec2 instances both public and private 
 
 # VPC and Subnets
 resource "aws_vpc" "main" {
@@ -2776,7 +2776,163 @@ resource "aws_eks_node_group" "example_node_group" {
   }
 }
 	
-	
+Terraform config for deploying ec2 instnaces on public and private subnets with route tables and sec group 
+
+provider "aws" {
+  region = "eu-north-1"
+}
+
+# VPC creation
+resource "aws_vpc" "main_vpc" {
+  cidr_block = "10.0.0.0/16"
+  enable_dns_support = true
+  enable_dns_hostnames = true
+}
+
+# Public Subnet
+resource "aws_subnet" "public_subnet" {
+  vpc_id                  = aws_vpc.main_vpc.id
+  cidr_block              = "10.0.1.0/24"			// fiecare instanta ec2 va primi de aici mereu un ip private, de ex 10.0.1.10
+  availability_zone       = "eu-north-1a"
+  map_public_ip_on_launch = true					// aici ii permitem subnet-ului sa ii aloce un ip public instantei ec2, pt a putea fi accesibila din internet, de ex 13.48.230.77
+  tags = {
+    Name = "Public Subnet"
+  }
+}
+
+# Private Subnet
+resource "aws_subnet" "private_subnet" {
+  vpc_id                  = aws_vpc.main_vpc.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "eu-north-1a"			// ec2-urile din privatesubnet au doar private ips alocate 
+  tags = {
+    Name = "Private Subnet"
+  }
+}
+
+# Internet Gateway (for public access)
+resource "aws_internet_gateway" "main_igw" {
+  vpc_id = aws_vpc.main_vpc.id
+  tags = {
+    Name = "Main IGW"
+  }
+}
+
+# Elastic IP
+resource "aws_eip" "nat_eip" {
+  vpc = true
+}
+
+# NAT Gateway (for private subnet outbound access)
+resource "aws_nat_gateway" "nat_gateway" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_subnet.id			// nat gatway-ul trei sa fie intr-un public subnet ca sa poata comunica cu internetu si are nevoie de un elastic ip care e public ip . Deci nat gatway se afla in public subnet ca sa poata ruta traficu de la instantele din subnetu private catre internet prin internet gateway(gatewayu subneturulor publice)
+  depends_on    = [aws_internet_gateway.main_igw]		// dependinta pt ca nat sa fie create dupa internet gateway pt ca nat are nev de igw 
+}
+
+# Route Table for public subnet (route to IGW)
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"							// are o ruta catre internet gateway(0.0.0.0/0 → igw-id) care permit ec2-urilor din public subnet sa comunice direct cu internetu si de asta functioneaza public ip pt ca route table-ul lui public subnet are un route catre internet gateway(IGW) 
+    gateway_id = aws_internet_gateway.main_igw.id		// internet gateway permite accesul bidirectional pentru instanta ec2 
+  }
+}
+
+# Route Table for private subnet (route to NAT Gateway)
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.main_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"							// are o ruta catre NAT Gateway(0.0.0.0/0 → igw-id) care permit ec2-urilor din public subnet sa comunice direct cu internetu 
+    gateway_id = aws_internet_gateway.main_igw.id		// un ec2 din private subnet face request de acces la net prin route table-ul subnetului private catre nat gateway care se afla in public subnet si astfel permite instantei sa comunice cu internetu. Raspunsu vine inapoi la nat gateway si e forwardat inapoi la instanta din private subnet 
+    nat_gateway_id = aws_nat_gateway.nat_gateway.id		// ca nat gateway sa aiba acces la internet, internet gateway ii permite acest lucru si mai are nevoie si de Elastic IP, care este un public ip 
+  }
+}
+
+# Associate public subnet with public route table
+resource "aws_route_table_association" "public_assoc" {
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+# Associate private subnet with private route table
+resource "aws_route_table_association" "private_assoc" {
+  subnet_id      = aws_subnet.private_subnet.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+# Security Group for Web App (Frontend & Backend)
+resource "aws_security_group" "web_sg" {
+  name        = "web-app-sg"
+  description = "Allow inbound and outbound traffic for the web app"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# EC2 Instance for Frontend & Backend (in Public Subnet)
+resource "aws_instance" "frontend_backend" {
+  count           = 2
+  ami             = var.ami
+  instance_type   = var.instance_type
+  subnet_id       = aws_subnet.public_subnet.id
+  key_name        = var.key_name
+  security_groups = [aws_security_group.web_sg.name]
+
+  tags = {
+    Name = "WebApp-Frontend-Backend"
+  }
+}
+
+# EC2 Instance for Database (in Private Subnet)
+resource "aws_instance" "db_instance" {
+  ami             = var.ami
+  instance_type   = var.instance_type
+  subnet_id       = aws_subnet.private_subnet.id
+  key_name        = var.key_name
+  security_groups = [aws_security_group.web_sg.name]
+
+  tags = {
+    Name = "WebApp-Database"
+  }
+}
+
+# Outputs
+output "public_ips" {
+  value = aws_instance.frontend_backend[*].public_ip
+}
+
+output "private_ips" {
+  value = aws_instance.db_instance[*].private_ip
+}
+
 	
 	
 	

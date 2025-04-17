@@ -677,3 +677,18 @@ groups:
       severity: critical
     annotations:
       summary: "Node CPU load is above 90%"
+
+
+Zabbix si Grafana 
+
+-scriem serviciile cu imaginile de zabbix in compose si dupa ca vedem ca merge intram pe grafana la localhost:3000 si mergem in stanga la Administration, Plugins and data, Plugins, cautam Zabbix intram pe el si ii dam Enable, avem aici tutorial https://grafana.com/docs/plugins/alexanderzobnin-zabbix-app/latest/configuration/
+-apoi intram la Connections, Data Source si dam Add new data source sus dreapta cu + si albastru  
+-la URL bagam http://zabbix-web:8080/api_jsonrpc.php  din ceva motiv 
+-dupa vedem ca nu merge si intram pe zabbix UI aici http://localhost:8082 si mergem la Data collection -> Hosts si pe singuru nostru host il redenumim in docker-agent si la dns name ii punem zabbix-agent si schimbam la Connect to din IP in DNS (nu neaparat nu prea face multe an plus)
+-ca sa vedem ca mergem mergem la Monitoring -> Latest data si la Hosts groups alegem Zabbix servers si la Hosts alegem docker-agent si dam filter si gasim ca avem ceva chestii pe acolo deci e ok 
+-punem idu pt import dashboard: 5363 care mai merge da nu prea 
+
+
+https://medium.com/@danielmehrani/building-a-comprehensive-monitoring-stack-zabbix-prometheus-and-grafana-with-docker-compose-3391e25acc36
+https://grafana.com/grafana/plugins/alexanderzobnin-zabbix-app/
+https://github.com/akmalovaa/zabbix-docker

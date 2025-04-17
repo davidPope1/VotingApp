@@ -3249,6 +3249,7 @@ Demo - Provision cluster using Kubeadm
     $ kubectl get pods -o wide -A
 
     -asta ne confirma ca pods urile sunt inmpartite pe node urile noastre, deci scheduler isi face treaba
+    -luam ip-ul nodului master cu comanda ip a si ne uitam la eps08 sau cv de genu si adaugam port urile dupa : 31000 su 31001 asa: http://192.168.1.8:31001
     -avem mai multe componente ale kubernetes: API server, etcd value store, kubeadm cli pt a seta clusteru cu maoster si workers, kubelet care e un serviciu care merge in spate cumva 
 
 

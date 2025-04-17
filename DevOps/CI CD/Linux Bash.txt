@@ -20,3 +20,425 @@ $ cd /etc
 $ pwd 
 /etc 
 
+-vedem ca pwd mereu printeaza folderu, folosind o referinta absoluta 
+-daca mergem desupra lui home si intram in etc/default si dam pwd o sa ne dea etc/default
+-cu comanda cd .. mergem un folder mai sus 
+-comanda cd mai are si alte scrtaturi fata de .. 
+-de ex, ca sa schimbam folderu curent in care suntem la folderul home al userului nostru curent(adica /home/david), putem folosi:
+
+$ cd 
+$ cd ~
+$ cd $HOME 
+
+-intr-un shell unele comenzi pe care le scriem sunt parte din programu shell. Aceste comenzi interne sunt uneori numite build-in commands 
+-de ex, putem sa folosim type sa vedem daca o comanda este external sau internal 
+
+$ type echo 
+echo is a shell builtin
+
+$ type pwd 
+pwd is a shell builtin
+
+$ type uname
+uname is /usr/bin/uname
+
+-observam ca echo si pwd sunt comenzi interne pe cand programu uname este extern, fapt indicat de afisarea referintei folderului absolut in structura virtuala de foldere 
+-o comanda poate fi desiponibila si intern si extren la shell. In acest caz, este important sa stim diferentele lor, pt ca ar putea sa produca rezultate diferite sau sa aiba nevoie de optiuni diferite 
+
+Environment Variables 
+
+-acest env vars urmaresc informatii specifice ale sistemului ca si numele userului logat in shell, folderul home default al userlului, path-ul de search pe care un user il foloseste sa gaseasca programe executabile si asamd 
+
+BASH_BERSION        Currnet Bash shell instance's version number 
+EDITOR              Default editor used by some shell commands 
+GROUPS              User account's group memberships 
+HISTFILE            Name of the user's shell command history file 
+HISTSIZE            Maximumm number of commands stored in history file 
+HOME                Current user's home directory name (home/david)
+HOSTNAME            Current system's host name 
+LANG                Locale category for the shell 
+LC_*                Various locale settings that override LANG 
+LC_ALL              Locale category for the shell that overrides LANG 
+LD_LIBRARY_PATH     Colon-separated list of library directories to seatch prior to looking through the standard library directories 
+PATH                Colon-separated list of directories to search for commands 
+PS1                 Primary shell command-line interface promt string 
+PS2                 Secondary shell command-line interface prompt string 
+PWD                 User account's current working directory 
+SHLVL               Current shell level 
+TZ                  User's time zone, if different from system's time zone 
+UID                 User account's user identification number 
+VISUAL              Default screen-based editor used by some shell commands 
+
+-putem afisa intreaga lista de environment variables disponibile in shell-ul nostru, folosind comanda set
+$ set 
+
+-cand introducem numele unui program(comanda) in shell prompt, shell-ul va cauta in toate folderele listate in env var PATH pt acel program. Daca shell-ul nu poate gasi programul, vom primi o comanda not found error message 
+
+$ echo $PATH 
+
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:
+....
+
+$ ls /home/david/get-docker.sh 
+/home/david/get-docker.sh 
+
+$ get-docker.sh 
+get-docker.sh: command not found
+
+-vedem ca path-ul lui get-docker.sh nu se afla in env varu PATH si cand il apelam in linia de comanda ne da eroare not found 
+-ca sa rulam un program care nu se afla in env varu PATH, trebuie sa ii dam pathu absolut in linia de comanda asa:
+
+$ /home/david/get-docker.sh 
+
+-utilitatea which este de ajutor in astfel de cazuri. Cauta prin folderele din PATH sa gaseasca programul(comanda). Daca gaseste programul, ii afiseaza pathu absolut. Asta ne ajuta sa nu mai trebuiasca sa ne uitam noi prin output-ul env var-ului PATH 
+
+$ which get-docker.sh 
+
+-nu ne returneaza nimic pt ca nu se afla acolo 
+
+$ which echo 
+
+/usr/bin/echo 
+
+-vedem ca utilitatea which nu gaseste programu get-docker.sh si trebuia sa afiseaze toate folderele din PATH in care a cautat
+-dar gaseste comanda echo si ii afiseaza pathu absolut 
+-daca programu se gaseste in PATH , il putem rula doar prin a introduce numele comenzii, dar daca vrem il putem executa si prin a-i da path-ul absolut in linia de comanda:
+
+$ echo Hello World 
+Hello World 
+
+$ /usr/bin/echo Hello World 
+Hello World 
+
+-putem modifica aceste env vars, una usor de schimbat este variabila care ne controleaza shell promptu(PS1):
+
+$ PS1="My new prompt: "
+My new prompt:
+
+-ca sa schimbam env varu, doar ii scriem numele, urmat de egal = , si apoi scriem noua valoare
+-deoarece variabila PS1 controleaza shell promptu, efectu schimbarii acesteia se vede imediat 
+-dar, putem avea probleme daca folosim aceasta metoda simpla de a schimba env varu. De ex, setarea nu va supravietui daca intram intr-un subshell
+-un subshell(numit si child shell uneori) e creeat cand performam anumite task-uri, ca si rularea unui script shell sau rularea anumitor comenzi 
+-putem sa aflam daca procesul nostru este intr-un subshell, uitandu-ne la data stored in env varu SHLVL.
+-un 1 indica ca nu suntem intr-un subshell, pt ca subshellu are numere mai mari. Daca SHLVL contine un numar mai mare decat 1, asta indica ca nu suntem intr-un subshell 
+-comanda bash creeaza automat un subshell, care este de ajutor pt a demonstra natura temporara de a folosi metoda simpla de schimbare a env vars, folosita anterior 
+
+My new prompt: echo $SHLVL 
+1
+My new prompt: bash 
+$
+$ echo $PS1 
+$
+$ echo SHLVL 
+2
+$ exit 
+exit 
+My new prompt:
+
+-observam ca varu SHLVL e setat pe 1, pana cand se intra intr-un subshell cu comanda bash 
+-notam si ca env varu PS1 care controleaza promptu nu supravietuieste cand intra intr-un subshell 
+-ca sa mentinem setarea unui env var, trebuie sa folosim comanda de export. Putem folosi export cand scriem definitia originala a variabilei sau sa o folosim dupa ce variabila este definita scriind export variable-name in cmd 
+
+$ export PS1="KeepPrompt: "
+KeepPrompt:
+KeepPrompt: bash 
+KeepPrompt:
+KeepPrompt: echo $SHLVL 
+2
+KeepPrompt:
+KeepPrompt: PS1="$ "
+$ export PS1 
+$ 
+
+-vedem ca prima metoda care a folosit comanda de export pe aceeasi linie ca si setarea env var-ului PS1 si ca aceasta definire supravietuieste subshell-ului 
+-a doua schimbare la variabila PS1 o defineste prima data si apoi foloseste comanda export ca sa supravietuiasca in subshell 
+
+-daca o variabila este initial setata la nimic(blank) ca si env varu EDITOR, putem pur si simplu sa dam reverse la orice modificare facem variabilei folosind comanda unset 
+
+$ echo $EDITOR 
+
+$ export EDITOR=nano 
+$
+$ echo $EDITOR 
+nano 
+$
+$ unset EDITOR 
+$
+$ echo $EDITOR
+
+$ 
+
+-sa folosim mereu comanda unset cu mare atentie, daca o folosim pe env vars ca si PS1, putem cauza lucruri confusing sa se intample 
+-daca variabila avea o alta definitie inainte sa o modificam, e mai bine sa o schimbam manual la valoarea originala decat sa folosim comanda unset 
+
+Getting Help 
+
+-uneori am putea avea nevoie de documentatia unei comenzi de linux pe sintaxa sau optiunile acesteia, cadn nu avem acces la internet 
+-linyx are man pages instalat local. Acestea contin documentatie despre scopul unei comenzi, optiunile acesteia, sintaxa acesteia si asamd. Documentatia asta e facuta de obicei de programatoru care a scris utilitatea respectiva 
+-ca sa accesam o pagina man pt comanda uname de ex, scriem $ man uname  . Acest sistem de ajutor bazat pe text ne va umple terminalu cu documentatia comenzii respective 
+-by default, paginile man folosesc utilitatea less, permitandu-ne sa mergem inainte si inapoi pe dsiplay folosind tastele PageUp sau PageDown, putem folosi siu sagetile sau spacebar-ul daca vrem 
+-daca folosim man pages sa citim documentatia unei comnezi build in, o sa ajungem la General Commands Manual page pt Bash built-ins, unde e greu sa gasim o comanda folosind tastele, mai bine folosim / urmata de numele comenzii. Poate trei sa facem asta de doua trei ori pana gasim documentatia utilitatii dar e mult mai rapid asa decat cu sagetile sau cu page up 
+
+-un feature de mare ajutor al utilitatii man este abilitatea sa cautam cuvinte cheie in coducmentatie folosind optiunea -k asa:
+
+$ man -k passwd 
+
+-in loc de man -k, putem folosi si comanda apropos asa: apropos passwd , dar man -k e mai usor de scris 
+
+-vedem in comanda de mai sus ca sunt mai multe iteme gasite in man pages folosind keyword search 
+-langa numele utilitatii, apare in paranteze numarul sectiunii man page 
+-man pages au 9 sectiuni care contin mai multe tipuri de documentatie 
+-daca scriem $ man man  , in command line, vedem informatii de tip help pt a folosi man pages si diferitele section names 
+-desi e fain ca man pages cuprind mai multe decat doar documentatie pe comenzi, poate cauza probleme daca o utlilitate are acelasi nume ca si alte iteme, ca si un file in cazul passwd 
+-de obicei, comanda man urmareste o ordine de cautare predefinita si in caz de nume duplicate, ne va arata doar pagina cu utilitatea man 
+-daca vrem sa vedem o alta pagina, folosim section number impreuna cu numele itemului 
+-sunt cateva metode de a face asta, folosind ca exemplu fileu passwd documentat in sectiunea 5:
+$ man -S 5 passwd 
+$ man -s 5 passwd 
+$ man 5 passwd
+
+-pe langa ajutorul primit de la man pages, putem primi ajutor si din command line history 
+-shell-ul pastreaza urma tuturor comenzilor pe care le am folosit recent si le pune in history list-ul sesiunii noastre de login 
+-ca sa vedem istoricul nostru de comenzi scriem asa:
+$ history 
+
+-vedem ca fiecare comanda este urmata de un numar. Asta ne permite sa rechemam o comanda din lisa istoricului prin numarul ei si sa o avem executata automat asa:
+
+$ !528  (care inseamna hisotry si o va executa din nou)
+
+$ !518  (man -k passwd) 
+...
+passwd (1)      - update user's authentication tokens 
+passwd (5)      - password file 
+
+-vedem ca trebuie sa folosim ! inainte de nr comenzii. Shell-ul va arata comanda pe care o rechemam si apoi o va executa, ceea ce e handy 
+
+-daca nu ne merge comanda history, user accountu nostru ar putea folosi un alt shell decat Bash shell. Putem verifica rapid cu comanda $ echo $SHELL  . Daca nu vedem /bin/bash , aia e problema. Trei sa modificam user accountu sa foloseasca /bin/bash ca si shell-ul nostru default. Trei sa ne relogam ca schimbarea sa aiba efect.
+
+-ca sa reexecutam cea mai recenta comanda scriem si executam: $ ! !  . Alternativa este sa apasam sageata sus si dam enter 
+-alt avantaj al folosirii sagetii este ca putem edita comanda cum avem nevoie inainte sa o executam 
+-lista hisotry este pastrata intre sesiuni de login in fileu descris in env varu $HISTFILE . Este de obicei fileu .bash_history in folderul nostru home:
+
+$ echo $HISTFILE
+/home/david/.bash_history
+
+-de tinut minte ca history file-ul nu va avea comenzi pe care le am folosit in timpul sesiunii curente de login. Aceste comenzi sunt doar in history list 
+-daca vrem sa updatam history file-ul historu listu, va trebui sa dam comanda history cu optiunea corecta:
+    -a adauga history listu curent la sfarsitul history file-ului 
+    -n adauga history fileu de la bash shell session-ul curent la curentu history list 
+    -r suprascrie current history listu cu comenzile din hisotry file 
+
+-daca vrem sa stergem command-line history-ul este destul de usor de facut. Mai intai dam clear la history listu curent scriind history -c in command line. Dupa, dam wipe la history file folosind history -w , care copiaza history listu blank in fileu .bash_history, dandu-i overwrite la content-uri, deci dam asa:
+$ hisotry -c 
+$ history -w 
+
+
+Editing Text Files
+
+-trei editoare populare de linux sunt:
+    - emacs
+    - nano
+    - vim 
+
+-editoru nano este un editor text bun pt a incepe sa-l folosim daca nu am mai avut de lucru cu un editor sau am folosit doar editoare GUI 
+-ca sa incepem sa folosim nano, scriem nano urmat de numele file-ului pe care dorim sa il editam sau sa il creeam 
+-lista de shortcut-uri este una dintre cele mai de folos feature-uri ale editorului nano. Lista din jos-ul window-ului arata cele mai comune comenzi si shortcut-urile asociate.
+-simbolul ^ din lista indica faptul ca trei sa folosim tasta Ctrl si apoi sa apasam tasta V. Ca sa vedem comenzi aditionale, apasam combinatia Ctrl+G pt ajutor. 
+-in subsystemu de help, vom vedea niste combinatii de taste ca si M-k. Un exemplu este M-W pt a repeta search-ul. Acelea sunt combinatii de taste metacharacter si M reprezinta Esc, Alt sau key-ul Meta, depinzand de setup-ul tastaturii noastre. k-ul reprezinta o tasta de pe tastatura ca si W 
+-editoru nano este minunat pt modificari simple in text file-uri. Daca avem nevoie sa folosim un text editor mai puternic ca sa creeam programe sau script-uri shell, alegeri populare pot fi editoarele emacs si vim.
+
+Dealing with Default Editors 
+
+-anumite utilitati ca si crontab folosesc un editor default, numit de asemenea si standard editor, ca si vim 
+-daca suntem noi cu editarea textelor, am prevera sa folosim un text editor care e destul de usor de folosit, deci sa fim obligati sa folosim un editor mai avansat poate fi problematic 
+-putem schimba editorul standard al contului prin variabilele de sistem EDITOR si VISUAL 
+-variabila EDITOR a fost original pt editoare line-based ca si vechea utilitate ed 
+-variabila VISUAL este pt editoare bazate pe ecran(editoare care ocupa tot ecranul ca si nano, emacs si vim)
+
+-schimbam editoru standard la cel pe care il vrem, prin a scrie, de ex, export EDITOR=nano in linia de comanda
+-facem la fel pt env varu VISUAL. Si mai bine, adaugam aceste linii intr-un environment file ca sa fie setate automat de fiecare data cand ne logam in sistemul linux 
+
+-ca sa folosim editoru emacs, scriem emacs urmat de numele file-ului pe care ne dorim sa il editam sau creeam 
+-adaugarea sau modificarea de text, sau mutarea prin acest editor e destul de straightforward 
+-oricum sa folosim emacs la adevarata lui putere, trei sa invatam variatele shortcut keystrokes, de ex:
+    - Ctrl+X si apoi Ctrl+S sa salvam continutul bufferului editorului in file 
+    - Ctrl+X si apoi Ctrl+C sa iesim din editor 
+    - Ctrl+H si apoi T ca sa mergem in tutorialu emacs 
+-sa avem grija ca in documentatia editorului emacs, tasta Ctrl este reporezentata de o singura litera: C si ca sa adaugam o tasta acesteia, documentatia foloseste un dash - in loc de traditionalulu + 
+-comenzile emacs pot fi unpic dificile la inceput, dar beneficiile invatarii editorului emacs sunt:
+    - editarea comenzilor folosite in emacs pot fi folosite si sa editam rapid comenzile bagate in command lineu shell-ului 
+    - editoru emacs are un GUI cu aceleasi feature-uri de editat 
+    - ne putem focusa pe featurile editorului de care avem nevoie mai mult si sa invatam capabilitatile avansate ale editorului mai tarziu 
+-inainte sa ne uitam cum folosim editoru vim, trei sa vorbim despre vim vs vi. Editoru vi a fost un editor de text Unix si cand a fost rescris ca un tool oper source a fost imbunatatit, deci vim vine de la "vi improved"
+-deseori, o sa vedem ca comanda vi va proni editoru vim. In alte distributii, doar comanda vim va proni editoru vim. Uneori ambele comenzi functioneaza. Folosim utilitatea which sa determinam ce comanda foloseste distributia curenta 
+$ which vim
+/usr/bin/vim
+$ which vi
+# alias vi='vim'  nu arata asta, dar daca arata 
+/usr/bin/vi
+
+-daca afisa si linia cu alias, atunci distributia de CentOS ar fi facut alias la comanda vi sa pointeze la comanda vim, deci pt aceasta distributie ambele comenzi(si vim si vi) vor porni editoru vim
+
+-unele distributii ca Ubuntu nu au editoru vim instalat by default, in locu ei folosesc o alternativa numita vim.tiny, care nu ne va lasa sa incercam toate comenziile vim discutate aici 
+-putem verifica distributia noastra sa vedem daca vim e instalat obtinand vim program file 
+-scriem asa: $ type vi si daca primim o eroare sau un alias scriem: $ type vim 
+-dupa ce primim folderu comenzii si filename-ul scriem comanda $ readlink -f si scriem mai departe asa: $ readlink -f , urmat de folder si numele file-ului, de ex $ readlink -f /usr/bin/vi 
+-daca vedem /usr/bin/vi.tiny trebuie sa facem switch la alta distributie sau sa instalam packetu vim ca sa folosim comenzile vim 
+
+$ type vi
+vi is /usr/bin/vi
+$ type vim
+vim is /usr/bin/vim
+$ readlink -f /usr/bin/vim
+/usr/bin/vim.basic
+
+-ca sa folosim editoru vim, scriem vim sau vi, in functie de distributia noastra, urmat de numele file-ului pe care dorim sa il editam sau creeam 
+$ vim get-docker.sh
+
+-editorul vim lucreaza pe data file-ului intr-un memory buffer si acest buffer este afisat pe ecran 
+-daca deschidem vim fara un file name sau file nameu pe care l am bagat nu exista inca, vim porneste un nou buffer area pt editare 
+-editoru vim are o zona de mesaje in josul editorului. Daca abea am deschis un file deja creeat, va afisa numele file-ului impreuna cu numarul de linii si caractere citite in buffer area. Daca creeam un nou file o sa vedem [New File] in zona cu mesajul 
+
+Understanding vim Modes 
+
+-editoru vim are 3 moduri standard:
+
+-Command Mode: acesta e modu pe care il foloseste vim cand intram prima data in buffer area. Mai e numit uneori si normal mode. Aici putem folosi combinatii de taste sa folosim comenzi. De ex, tasta J ne va muta cursoru mai jos cu o linie. Comanda este cel mai bun mod de a ne plimba prin buffer area. 
+-Insert Mode: Acest mod mai este numit edit sau entru mode. Acesta este modu in care putem sa facem editare simpla. Nu sunt multe comenzi sau combinatii de taste pt un mod special. Intram in acest mod din Command Mode apasand tasta I (sau INSERT). Acuma mesajul --INSERT-- ne va aparea in josu prompt-ului. Iesim din acest mod apasand tasta ESC sau ctrl+c.
+-Ex Mode: Acest mod este uneori numit colon commands pt ca fiecare coamnda bagata aici este precedata de doua puncte : . De ex, ca sa iesim din editoru vim si sa nu salvam nimic scriem :q si apasam Enter sau ca sa salvam si sa iesim scriem :wq  
+
+Exploring Basic Text-Editing Procedures 
+
+-din moment ce incepem in coomand mode cand intram in buffer area-ul editorului vim, e bine sa intelegem cateva dintre comenzile uzuale ca sa ne miscam prin acest mod:
+
+- h : mutam cursoru un caracter la stanga 
+- l : mutam cursoru un caracter la dreapta
+- j : mutam cursoru jos o linie(urm linie in text)
+- k : mutam cursoru o linie mai sus(linia precedenta in text)
+- w : mutam cursoru un cuvant mai in fata in fata urm cuvant 
+- e : mutam cursoru la finalul cuv curent 
+- b : mutam cursoru inapoi un cuvant 
+- ^ : mutam cursoru la inceputul fileului 
+- $ : mutam cursoru la sfarsitul fileului
+- gg : mutam cursoru pe prima linie din fisier 
+- G : mutam cursoru pe ultima linie din fisier 
+- nG : mutam cursoru pe linia n din file 
+- Ctrl+B : scrollam sus aproape un full screen 
+- Ctrl+F : scrollam jos aproape un full screen 
+- Ctrl+U : scrollam sus jumate de ecran 
+- Ctrl+D : scrollam jos jumate de ecran
+- Ctrl+Y : scrollam sus o linie 
+- Ctrl+E : scrollam jos o linie 
+
+-sa ne miscam rapid prin bufferu editorului vim este util. Oricum, sunt ceva comenzi de editare care ajuta la accelerarea procesului nostru de modificare. Mai jos avem cele mai folosite comenzi de editare, care sunt case sensitive. 
+
+- a : inseram text dupa cursor 
+- A : inseram text la finalul textului de pe linia curenta 
+- dd : stergem linia curenta 
+- dw : stergem cuvantu curent 
+- i : inseram text inaintea cursorului 
+- I : inseram text inaintea inceperii textului de pe linie 
+- o : face o noua linie sub cursor si intra in modu INSERT 
+- O : face o noua linie deasupra la cursor si intra in modu INSERT
+- p : da paste la un text copiat dupa cursor 
+- P : da paste la un text copiat(yanked) inainte de cursor 
+- yw : da copy(yank) la cuvantu curent 
+- yy : da copy(yank) la linia curenta 
+
+-in modul de comanda, putem dupa comenzile de editare cu un pas mai departe, folosind intreaga lor sintaxa asa:
+COMMAND [NUMBER-OF-ITEMS] ITEM 
+
+-de ex, daca vrem sa stergem 3 cuvinte, am apasa tastele D, 3 si W. Daca am vrea sa copiem textu de la cursor pana la finalul linei de text, am apasa tastele Y $, ne mutam la locatia la care am vrea sa dam paste la text si apasam tasta P 
+-de retinut ca unii stau in modul de comanda sa ajunga unde trebuie in fisier si apoi apasa tasta I sa intre in modu INSERT pt a edita text mai usor. E o metoda buna de lucru 
+-Ex Mode, are comenzi aditionale ajutatoare. Trebuie sa fim in Command Mode sa intram in Ex Mode. Nu putem intra din INSERT mode in Ex Mode. Deci, daca suntem in modu de comanda, apasam Esc sa ne intoarcem in modu de comanda mai intai 
+-comenzi de Ex Mode care ne ajuta sa menegeriem text fileu nostru. Toate combinatiile de tasta includ : sa foloseasca comenzi Ex:
+
+- :! command - Executa comanda shell(command) si printeaza rezultatele, dar nu da quit din editor 
+- :r! command - Executa comanda shell(command) si include rezultatele in buffer area editorului 
+- :r file     - Citeste continuturile file-ului si le include in buffer area editorului 
+
+Saving Changes
+
+-dupa ce am facut schimbarile necesare textului in vim buffer area, e timpu sa dam save la ce am facut. Putem alege una dintre multele metode de mai jos. Scriem ZZ in Command Mode pt a scrie bufferu pe disc si pt a da exit la procesu nostru din editoru vim. 
+
+- :x   - dam write la buffer in file si dam quit la editor(adica dam save la schimbari si iesim din editor) 
+- :wq  - dam write la buffer in file si dam quit la editor(adica dam save la schimbari si iesim din editor)
+- :wq! - dam write la buffer in file si dam quit la editor(face override la protectie)
+- :w   - dam write la buffer si stam in editor(adica dam save la schimbari si stam in editor) 
+- :w!  - dam write la buffer si stam in editor(face override la protectie) 
+- :q   - iesim din editor fara sa dam write la buffer(iesim din vim fara sa salvam schimbarile)
+- :q!  - iesim din editor fara sa dam write la buffer(face override la protectie)
+
+Comanda ZZ - da write la buffer in file si iese din editor 
+
+-dupa ce vedem toate comenzile modurilor, putem intelege de ce unii oameni evita editoru vim. Sunt multe comenzi obscure de stiut. Oricum, unora le place editoru vim pt ca e foarte puternic. 
+
+-anumite distributii au un tutorial vim instalat by default. Asta e un mod laindemana de a invata sa folosim editoru vim. Sa incepem, scriem $ vimtutor in linia de comanda. Daca trei sa iesim din tutorial inainte sa se termine, scriem comanda :q 
+
+-e tentant sa invatam doar un singur editor de text si sa le ignoram pe restu. Sa stim doua editoare e ok in lucrul nostru de zi cu zi in linux. Pt modificari simple, editoru nano e stralucit. Pt editare de text mai complexa, editoarele vim si emacs sunt preferate. Toate merita timpul nostru sa le invatam.
+
+Processing Text Using Filters 
+
+-in linia de comanda linux, deseori trebe sa vedem file-uri sau portiuni din ele. Pe langa asta, am putea avea nevoie sa folosim tool-uri care ne permit sa bucati de date sau satistici de file-uri pt troubleshooting sau scopuri de analiza(analitice). Utilitatile in aceasta sectiune pot asista in toate aceste activitati. 
+
+File-Combining Commands 
+
+-sa punem impreuna text file-uri ca sa le vedem pe ecran si sa le comparam e folositor. Comenzile de combinare a file-urile de aici o sa faca asta.
+-utilitatea basic pt a vedea file-uri intregi este comanda concatenate. Desi scopul principal al tool-ului acesta in viata este sa dea join impreuna la text file-uri si sa le dea display, e deseori folosit doar sa dea display la un mic file txt. Ca sa vedem un mic file txt, folosim comanda cat cu sintaxa urm:
+$ cat [OPTION]... [FILE]...
+
+-comanda cat e simpla de folosit. Doar bagam comanda urmata de orice text file vrem sa citim, ca de ex:
+$ cat numbers.txt 
+42
+2A
+52
+0010 1010
+*
+$
+
+-comanda cat ne afiseaza tot continutu file-ului pe ecran. Cand gasim iar linia noastra de comanda, stim ca acea linie de deasupra prompt-ului este ultima linie a file-ului.
+
+
+
+
+
+18:40 
+pagina 79!!!!!!!!!
+
+$ echo "hello" > /path/to/myfile.txt        
+
+-asta va face overwrite la myfile.txt, adica va sterge tot ce se afla acolo si va scrie doar hello 
+-daca vrem sa nu facem overwrite, putem face doar append folosind >> astfel:
+
+$ echo "hello" >> /path/to/myfile.txt  
+
+-daca vrem sa dam append sau overwrite la un file care este detinut de useru root, doar comanda echo nu ne va ajuta, deoarece:
+
+$ sudo echo "hello" > /etc/myfile 
+
+-acest file din folderu etc(folder in care de obicei avem file-uri cu config-uri pt sistem) este detinut de userul root, deci avem nevoie de sudo ca sa il putem edita, de ex sudo vi ...
+-dar in cauzl nostru doar comanda echo va fi rulata ca si root, > este rulat de userul nostru normal(shellu nostru) si astfel vom primi o eroare de permisiune 
+-daca ne folosim su de comanda tee in combinatie cu comanda echo, vom avea succes, deoarece putem sa rulam comanda echo cu drepturi root folosind sudo 
+-comanda tee by default face overwrite la un file si daca acesta nu exista, o sa il creeze si in acelasi timp va printa pe ecran(in terminal) textul pe care il va scrie in fileu respectiv, de ex:
+
+$ echo "hello" | sudo tee /etc/myfile.txt 
+
+-aici combinam output-ul comenzii echo cu comanda tee, care va avea permisiuni sa faca overwrite la fileu din folderu etc pt ca este rulata cu comanda sudo 
+-daca vrem sa facem append cu comanda tee, folosim optiunea -a astfel:
+
+$ echo "hello again" | sudo tee -a /etc/myfile.txt 
+
+-daca vrem sa nu ne mai printeze output-ul pe ecran(stdout), putem sa redirectam output-ul intr-un alt file, de ex:
+
+$ echo "hello" | sudo tee /etc/myfile.txt > /dev/null 
+
+-daca vrem sa scriem mai multe linii intr-un fisier, putem sa ii dam ca input folosind <<EOF ... text ... EOF , asa:
+
+sudo tee /etc/someconfig.conf > /dev/null <<EOF
+[section]
+key=value
+another_key=another_value
+EOF
+
+-asta va face overwrite in someconfig.conf la tot ce este intre EOF-uri si va trimite si output-ul(adica efectiv ce este intre EOF-uri) in fileu /dev/null 
+

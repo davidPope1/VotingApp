@@ -125,6 +125,7 @@ services:
       - grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app
     depends_on:
       - prometheus
     restart: unless-stopped
@@ -161,7 +162,64 @@ services:
     networks:
       - monitoring 
 
+  zabbix-db:
+    image: postgres:15-alpine
+    container_name: zabbix-db
+    environment:
+      POSTGRES_USER: "zabbix"
+      POSTGRES_PASSWORD: "zabbixpass"
+      POSTGRES_DB: "zabbix"
+    volumes:
+      - zabbix-db-data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+  
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:alpine-latest
+    container_name: zabbix-server
+    depends_on:
+      - zabbix-db
+      - zabbix-web
+    environment:
+      DB_SERVER_HOST: "zabbix-db"
+      POSTGRES_USER: "zabbix"
+      POSTGRES_PASSWORD: "zabbixpass"
+      POSTGRES_DB: "zabbix"
+    ports:
+      - "10051:10051"
+    volumes:
+      - ./zabbix/:/usr/lib/zabbix/alertscripts/
+    networks:
+      - monitoring
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:alpine-latest
+    container_name: zabbix-web
+    depends_on:
+      - zabbix-db 
+    environment:
+      DB_SERVER_HOST: "zabbix-db"
+      POSTGRES_USER: "zabbix"
+      POSTGRES_PASSWORD: "zabbixpass"
+      POSTGRES_DB: "zabbix"
+      ZBX_SERVER_HOST: "zabbix-server"
+      PHP_TZ: "UTC"
+    ports:
+      - "8082:8080"
+    networks:
+      - monitoring
+  
+  zabbix-agent:
+    image: zabbix/zabbix-agent:alpine-latest
+    container_name: zabbix-agent
+    environment:
+      ZBX_HOSTNAME: "docker-agent"
+      ZBX_SERVER_HOST: "zabbix-server" 
+    networks:
+      - monitoring
+
 volumes:
+  zabbix-db-data:
   db-data:
   prometheus-data: {}
   grafana_data: {}
