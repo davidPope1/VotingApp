@@ -1,0 +1,102 @@
+Git commands
+
+-prima oara trei sa ne sincronizam cumva contu de github cu gitu local 
+
+git config --global user.name "davidPope1"
+git config --global user.email "david_1565@yahoo.com"
+
+-ca sa dam clone dam comanda:
+
+git clone https://github.com/user/repo.git
+
+-ca sa verificam statusu curent, gen ce file-uri au fost adaugate/modificate/sterse:
+
+git status
+
+-ca sa dam stage la schimbari si sa le pregatim pt commit, putem da doar la un file anume sau la toate schimbarile facute
+
+git add filename         # Add one file
+git add .                # Add all changes
+
+-putem da si unstage la un file:
+
+git reset filename
+
+-ca sa abandonam schimbarile:
+
+git fetch origin
+git reset --hard origin/main
+
+-ca sa dam commit la schimbari:
+
+git commit -m "your message"
+
+-ca sa dam push pe un branch remote, dupa ce am dat commit. Poate sa nu fie branchu main, de obicei lucram pe branch-uri din branchu main 
+
+git push origin branch-name
+
+-ca sa dam pull la schimbari, adica sa sincronizam repo-ul local cu cel de pe github in caz ca altcineva a mai dat push la vreun commit
+
+git pull origin branch-name
+
+-ca sa creeam un nou branch
+
+git checkout -b new-branch-name
+
+-ca sa schimbam branchu curent
+
+git checkout branch-name
+
+-ca sa stergem un branch avem douo posibilitati
+
+git branch -d branch-name         # Safe delete (merged)
+git branch -D branch-name         # Force delete (unmerged)
+
+-ca sa vedem commit history
+
+git log --oneline --graph --all
+
+-sa ne arate schimbarile inainte sa dam commit
+
+git diff
+
+-sa ne arate schimbarile curente
+
+git stash
+
+-sa dam reapply la schimbarile stashed
+
+git stash pop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
