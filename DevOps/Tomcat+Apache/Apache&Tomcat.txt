@@ -1,0 +1,39 @@
+Apache and Tomcat 
+
+-am vrut doar sa fac un setup care sa include doua containere unul cu imaginea lui tomcat si celalalt cu imaginea apache httpd. 
+-containerul tomcat ar trebui sa functioneze ca un webserver care forwardeaza request-uri de api in backendu de java, dar in cazu nostru doar folosim imaginea bitnami/tomcat:latest care ne afiseaza default welcome pageu de la tomcat
+-trebuie sa facem un docker-compose.yml file in care sa descirem cele doua servicii: tomcat si apache(httpd)
+-apache il expunem pe portul 80 si tomcat pe 8080 
+-in serviciul apache, trebuie sa mapam proxy.conf din folderu local apache/conf in folderul default al acestuia de pe container. Acesta este un file de configurare pt ReverseProxy care va forwarda requesturile de pe http://localhost la http://localhost:8080 si va si intoarce response-ul.
+-mai trebuie si sa dam include la fileu proxy.conf in fisierul main de configrare httpd.conf de pe container ca sa ia in considerare configu nostru pt proxy printr-o comanda shell pe care o punem in service-ul nostru din docker compose 
+-in fileu proxy.conf doar vom incarca doua module la incept pt setup-ul de proxy de care avem nevoie(proxy_module si proxy_http_module) si intrun IfModule vom mapa / la http://tomcat:8080/  , deoarece / se refera la localhost:80 si cum cele doua containere sunt in acelasi network, putem sa accesam direct serviciul tomcat din 
+
+-daca am scrie localhost:8080 ar insemna sa ne conectam la noi insine(containeru apache) dar pe portul 8080 
+-dar serveru tomcat ruleaza in alt container deci localhost:8080 nu i-ar da reach 
+-tomcat:8080 in care tomcat este numele service-ului. Noi facem un docker network in care inclundem ambele servicii deci astea vor putea comunica intre ele folosind numele serviciului respectiv ca si hostname-uri 
+-deci din containeru apache, http://tomcat:8080 inseamna conecteaza-te la containeru numit tomcat pe portu 8080 
+-ne gandim la docker-compose ca setarea unui mini-private-DNS system pt containerele noastre 
+
+ProxyPass / http://tomcat:8080/
+ProxyPassReverse / http://tomcat:8080/
+
+-ProxyPass / http://tomcat:8080/ ineamna sa ia tot ce vine la http://localhost/ si sa ii dea forward la http://tomcat:8080/ 
+-ProxyPassReverse este nevoie de el pt reverse handlers, ca si redirectele, ca tomcat sa nu ii zica browserului nostru sa se intoarca pe portu 8080 si resultu de la request sa se intoarca pe portu 80 
+
+-deci workflow-ul este asa: 
+    -deschidem browseru si mergem pe http://localhost/
+    -apache da match la ruta . in ProxyPass 
+    -da forward la request intern la http://tomcat:8080/ 
+    -tomcat ii da handle(de ex returneaza welcome page)
+    -apache ia response-ul si il trimite inapoi pe browseru nostru 
+
+-daca am avea containere de frontend si backend dedicate sa dam serve la mai multe aplicatii am putea face asa, de exemplu:
+
+ProxyPass /api/ http://backend:5000/
+ProxyPassReverse /api/ http://backend:5000/
+
+ProxyPass /app/ http://frontend:3000/
+ProxyPassReverse /app/ http://frontend:3000/
+
+-astfel, http://localhost/api/... → backend
+         http://localhost/app/... → frontend

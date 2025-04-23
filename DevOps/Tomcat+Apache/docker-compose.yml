@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  apache:
+    image: httpd:latest
+    container_name: apache 
+    volumes:
+      - ./apache/conf/proxy.conf:/usr/local/apache2/conf/extra/proxy.conf 
+    # - ./apache/conf:/usr/local/apache2/conf
+    # - ./apache/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    # - ./apache/conf/extra:/usr/local/apache2/conf/extra
+    command: >
+      sh -c "echo 'Include conf/extra/proxy.conf' >> /usr/local/apache2/conf/httpd.conf && httpd-foreground"
+    ports: 
+      - "80:80"
+    depends_on:
+      - tomcat 
+    networks:
+      - webapp
+
+  tomcat:
+    image: bitnami/tomcat:latest
+    container_name: tomcat
+    ports:
+      - "8080:8080"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - webapp
+
+networks:
+  webapp:
