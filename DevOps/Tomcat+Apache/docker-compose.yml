@@ -5,10 +5,8 @@ services:
     image: httpd:latest
     container_name: apache 
     volumes:
-      - ./apache/conf/proxy.conf:/usr/local/apache2/conf/extra/proxy.conf 
-    # - ./apache/conf:/usr/local/apache2/conf
-    # - ./apache/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
-    # - ./apache/conf/extra:/usr/local/apache2/conf/extra
+      - ./apache/conf/proxy.conf:/usr/local/apache2/conf/extra/proxy.conf
+      - ./apache/frontend:/usr/local/apache2/htdocs/frontend 
     command: >
       sh -c "echo 'Include conf/extra/proxy.conf' >> /usr/local/apache2/conf/httpd.conf && httpd-foreground"
     ports: 

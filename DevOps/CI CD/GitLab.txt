@@ -1812,7 +1812,7 @@ Testing the connection with netcat(nc)
 
 $ nc -zv 13.53.192.99 22 
 
-$ PS H:\> Test-NetConnection -ComputerName 13.53.192.99 -Port 22     //bagam asta ca e mai lejer decat netshit ala                                                                                                                                                                                                                                                       
+$ PS H:\> Test-NetConnection -ComputerName 13.53.192.99 -Port 22     //bagam in PowerShell asta ca e mai lejer decat netshit ala                                                                                                                                                                                                                                                       
 
 -sa vedem si ce se intampla cand o conexiune nu este de succes 
 -mergem la tabu Security si vedem ca avem un Security group asignat acestei instante ec2, dam click pe el si aici vedem Inbound rules si Outbound rules
